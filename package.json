@@ -1,0 +1,17 @@
+{
+	"name"         : "plusapi",
+	"description"  : "Unofficial Google+ API compatible with Google+ API",
+	"version"      : "0.0.1",
+	"author"       : "YungSang http://yungsang.com/+",
+	"repository"   : {
+		"type"       : "git",
+		"url"        : "http://github.com/YungSang/plusapi.git"
+	},
+	"scripts" : {
+		"start"      : "node server.js"
+	},
+	"dependencies" : {
+		"express"    : "2.4.6",
+		"request"    : "2.1.1"
+	}
+}
