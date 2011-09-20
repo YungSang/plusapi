@@ -76,7 +76,7 @@ GooglePlusAPI = {
 		}
 		request(
 			{
-				uri     : 'https://plus.google.com/' + (id ? id : ''),
+				uri     : 'https://plus.google.com/' + (id ? id : '') + '?hl=en',
 				method  : 'GET',
 				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS)
 			},
@@ -123,7 +123,7 @@ GooglePlusAPI = {
 		var self = this;
 		request(
 			{
-				uri     : 'https://plus.google.com/_/profiles/get/' + id,
+				uri     : 'https://plus.google.com/_/profiles/get/' + id + '?hl=en',
 				method  : 'GET',
 				headers : this.DEFAULT_HTTP_HEADERS
 			},
@@ -169,6 +169,15 @@ GooglePlusAPI = {
 			9  : 'in_domestic_partnership',
 			10 : 'in_civil_union'
 		};
+		function _formatBirthday(birthday) {
+			if (!birthday) return '';
+			var dt = new Date(birthday);
+			mm = dt.getMonth() + 1;
+			dd = dt.getDate();
+			if (mm < 10) { mm = "0" + mm; }
+			if (dd < 10) { dd = "0" + dd; }
+			return '0000-' + mm + '-' + dd;
+		}
 		var json = {
 			kind               : 'plus#person',
 			id                 : id,
@@ -176,7 +185,7 @@ GooglePlusAPI = {
 			name               : {},
 			nickname           : data[47][1],
 			tagline            : data[33][1],
-			birthday           : data[16][1],
+			birthday           : _formatBirthday(data[16][1]),
 			gender             : genders[data[17][1]],
 			aboutMe            : data[14][1],
 //			currentLocation    : '',
