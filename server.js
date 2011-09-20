@@ -42,14 +42,29 @@ function responseJSON(req, res, json) {
 	res.header('cache-control',
 		'private, max-age=0, must-revalidate, no-transform');
 
+	var body = '';
+	if (typeof req.query.prettyPrint == 'undefined') {
+		req.query.prettyPrint = true;
+	}
+	if (typeof req.query.pp == 'undefined') {
+		req.query.pp = true;
+	}
+	if ((req.query.prettyPrint == true) && (req.query.pp == true)) {
+		body = JSON.stringify(json, null, ' ');
+	}
+	else {
+		body = JSON.stringify(json);
+	}
+
 	if (req.query.callback) {
 		res.header('Content-Type', 'text/javascript');
 		res.send('// API callback\n'
 			+ 'if (typeof ' + req.query.callback + ' == "function") '
-			+ req.query.callback + '(' + JSON.stringify(json) + ');');
+			+ req.query.callback + '(' + body + ');');
 	}
 	else {
-		res.send(json);
+		res.header('Content-Type', 'application/json');
+		res.send(body);
 	}
 }
 
