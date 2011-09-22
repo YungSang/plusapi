@@ -11,6 +11,8 @@ function extend(a, b) {
 }
 
 GooglePlusAPI = {
+	BASE_URL : 'https://plus.google.com',
+
 	OZDATA_REGEX : /<script\b[^>]*>[\s\S]*?\btick\b[\s\S]*?\bvar\s+OZ_initData\s*=\s*([{]+(?:(?:(?![}]\s*;[\s\S]{0,24}\btick\b[\s\S]{0,12}<\/script>)[\s\S])*)*[}])\s*;[\s\S]{0,24}\btick\b[\s\S]{0,12}<\/script>/i,
 
 	DEFAULT_HTTP_HEADERS : {
@@ -27,7 +29,7 @@ GooglePlusAPI = {
 		var self = this;
 		request(
 			{
-				uri     : 'https://www.google.com/accounts/ClientLogin',
+				uri     : this.BASE_URL + '/accounts/ClientLogin',
 				method  : 'POST',
 				body    : querystring.stringify({
 					accountType : 'HOSTED_OR_GOOGLE',
@@ -76,7 +78,7 @@ GooglePlusAPI = {
 		}
 		request(
 			{
-				uri     : 'https://plus.google.com/' + (id ? id : '') + '?hl=en',
+				uri     : this.BASE_URL + '/' + (id ? id : '') + '?hl=en',
 				method  : 'GET',
 				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS)
 			},
@@ -123,7 +125,7 @@ GooglePlusAPI = {
 		var self = this;
 		request(
 			{
-				uri     : 'https://plus.google.com/_/profiles/get/' + id + '?hl=en',
+				uri     : this.BASE_URL + '/_/profiles/get/' + id + '?hl=en',
 				method  : 'GET',
 				headers : this.DEFAULT_HTTP_HEADERS
 			},
@@ -138,6 +140,60 @@ GooglePlusAPI = {
 						}));
 					}
 					return callback(self.getProfileData(data[0], data[2]));
+				}
+				else {
+					return callback(self.makeErrorResponse(e, extend(response, {
+						name    : 'notFound',
+						message : 'unable to map id: ' + id
+					})));
+				}
+			}
+		);
+	},
+
+	getPublicActivities : function(id, query, callback) {
+		var self = this;
+		var qs = {
+			sp : '[1,2,"' + id + '",null,null,'
+				+ (query.maxResults ? query.maxResults : 'null')
+				+ ',null,"social.google.com",[]]',
+			hl : 'en'
+		};
+		if (query.pageToken) {
+			qs.ct = query.pageToken;
+		}
+		request(
+			{
+				uri     : this.BASE_URL + '/_/stream/getactivities/?'
+					+ querystring.stringify(qs),
+				method  : 'GET',
+				headers : this.DEFAULT_HTTP_HEADERS
+			},
+			function (e, response, body) {
+				if (!e && response.statusCode == 200) {
+					data = vm.runInThisContext('data = (' + body.substr(5) + ')');
+					data = self.getDataByKey([data], 'os.nu');
+					if (!data) {
+						return callback(self.makeErrorResponse({
+							name    : 'parseError',
+							message : 'invalid data format'
+						}));
+					}
+					var json = {
+						kind     : 'plus#activityFeed',
+						nextPageToken : data[1],
+						selfLink : 'https://www.googleapis.com/plus/v1/people/'
+							+ id + '/activities/public?',
+						nextLink : 'https://www.googleapis.com/plus/v1/people/'
+							+ id + '/activities/public?maxResults=' + data[2][5]
+							+ '&pageToken=' + data[1],
+						title    : 'Plus Public Activity Feed for ' + data[0][0][3],
+						updated  : self.getUpdated(data[0]),
+						id       : 'tag:google.com,2010:/plus/people/' + id
+							+ '/activities/public',
+						items    : self.getActivitiesData(data[0])
+					};
+					return callback(json);
 				}
 				else {
 					return callback(self.makeErrorResponse(e, extend(response, {
@@ -239,6 +295,162 @@ GooglePlusAPI = {
 			json.placesLived.push({
 				value : data[9][2][i]
 			});
+		}
+		return json;
+	},
+
+	getUpdated : function(items) {
+		var updated = 0;
+		for (var i = 0, len = items.length ; i < len ; i++) {
+			var item = items[i];
+			if (item[30] > updated) updated = item[30];
+		}
+		return new Date(updated / 1000);
+	},
+
+	getActivitiesData : function(items) {
+		var json = [];
+		var imageResizeProxy = 'http://images0-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&gadget=a&resize_h=100&url=';
+		for (var i = 0, len = items.length ; i < len ; i++) {
+			var item = items[i];
+			var activity = {
+				kind              : 'plus#activity',
+//				placeholder       :
+				title             : item[20],
+				published         : new Date(item[5]),
+				updated           : new Date(item[38]),
+				edited            : (item[70] ? new Date(item[70]/1000) : undefined),
+				latest            : new Date(item[30]/1000),
+					// new Date(item[30]/1000), updated (including +1 and comment)
+					// new Date(item[38]),      posted
+					// new Date(item[70]/1000), edited
+				id                : item[8],
+				url               : this.BASE_URL + '/' + item[21],
+				actor : {
+					id              : item[16],
+					displayName     : item[3],
+					url             : this.BASE_URL + item[24],
+					image : {
+						url           : item[18],
+					}
+				},
+				verb              : (item[77] ? 'share' : (item[27] ? 'checkin' : 'post')),
+				object : {
+					objectType      : (item[77] ? 'activity' : 'note')
+				},
+				annotation        : item[47],
+//				crosspostSource   :
+				provider : {
+					title           : (item[2] === 'Buzz') ? 'Google+' : item[2],
+				},
+				access : {
+					kind            : "plus#acl",
+//					description     :
+					items           : [{
+						type          : 'public',
+//						id            :
+					}]
+				}
+			};
+			if (item[77]) {
+				activity.object = extend(activity.object, {
+					id              : item[39],
+					actor : {
+						id            : item[44][1],
+						displayName   : item[44][0],
+						url           : this.BASE_URL + item[44][5],
+						image : {
+							url         : item[44][4]
+						}
+						// item[43] via
+						// item[44] origin
+					}
+				});
+			}
+			activity.object = extend(activity.object, {
+				content         : item[4],
+//				originalContent :
+				url             : this.BASE_URL + '/'
+					+ (item[77] ? item[77] : item[21]),
+				replies : {
+					totalItems    : item[93],
+				},
+				plusoners : {
+					totalItems    : item[73][16],
+				},
+				resharers : {
+					totalItems    : item[96],
+				},
+				attachments     : []
+			});
+			if (item[11].length) {
+				for (var j in item[11]) {
+					var attachment = item[11][j];
+					if (attachment[24][4] === 'video') {
+						activity.object.attachments.push({
+							objectType  : 'video',
+							displayName : attachment[3],
+							content     : attachment[21] || undefined,
+							url         : attachment[5][1],
+							image : {
+								url       : imageResizeProxy
+									+ encodeURIComponent(attachment[41][1][1]),
+								type      : 'image/jpeg'
+							}
+						});
+					}
+					else if (attachment[24][4] === 'image') {
+						activity.object.attachments.push({
+							objectType : 'photo',
+							content    : attachment[21] || undefined,
+							url        : (attachment[47][0][1] === 'picasa')
+								? attachment[24][1] : undefined,
+							image : {
+								url      : imageResizeProxy + encodeURIComponent(attachment[41][0][1]),
+								type     : attachment[24][3]
+							},
+							fullImage : {
+								url      : attachment[5][1],
+								type     : attachment[24][3],
+								height   : attachment[5][2],
+								width    : attachment[5][3]
+							}
+						});
+					}
+					else if (attachment[24][4] === 'document') {
+						activity.object.attachments.push({
+							objectType   :
+								(attachment[47][0][1] === 'picasa') ? 'photo-album' : 'article',
+							displayName  : attachment[3],
+							content      : attachment[21],
+							url          : attachment[24][1]
+						})
+					}
+					else if (attachment[24][4] === 'photo') {
+						activity.object.attachments.push({
+							objectType : 'photo',
+							content    : attachment[21] || undefined,
+							image : {
+								url      : imageResizeProxy
+									+ encodeURIComponent(attachment[41][1][1]),
+								type     : attachment[24][3]
+							},
+							fullImage : {
+								url      : attachment[5][1],
+								type     : attachment[24][3]
+							}
+						});
+					}
+				}
+			}
+			if (item[27]) {
+				activity.geocode   = item[27][0] + ' ' + item[27][1];
+				activity.address   = item[27][3];
+//				activity.radius    =
+				activity.placeId   = item[27][4];
+				activity.placeName = item[27][2];
+			}
+			json.push(activity);
 		}
 		return json;
 	},
