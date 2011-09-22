@@ -42,6 +42,12 @@ app.get('/v1/people/:id([0-9]+)/activities/public', function(req, res) {
 	});
 });
 
+app.get('/v1/activities/:id', function(req, res) {
+	plusapi.getActivity(req.params.id, function(json) {
+		responseJSON(req, res, json);
+	});
+});
+
 function responseJSON(req, res, json) {
 	res.statusCode = (json.error ? json.error.code : 200);
 	res.charset = 'UTF-8';
