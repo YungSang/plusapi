@@ -354,10 +354,18 @@ GooglePlusAPI = {
 	getActivityData : function(item) {
 		var imageResizeProxy = 'http://images0-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&gadget=a&resize_h=100&url=';
 
+		var title = item[20];
+		if (title.length > 100) {
+			title = title.replace(/\n+/g, ' ');
+			if (title.length > 100) {
+				title = title.substr(0, 97) + '...';
+			}
+		}
+
 		var activity = {
 			kind              : 'plus#activity',
 //			placeholder       :
-			title             : item[20],
+			title             : title,
 			published         : new Date(item[5]),
 			updated           : new Date(item[38]),
 			edited            : (item[70] ? new Date(item[70]/1000) : undefined),
@@ -430,7 +438,7 @@ GooglePlusAPI = {
 				if (attachment[24][4] === 'video') {
 					activity.object.attachments.push({
 						objectType  : 'video',
-						displayName : attachment[3],
+						displayName : attachment[3] || undefined,
 						content     : attachment[21] || undefined,
 						url         : attachment[5][1],
 						image : {
@@ -442,48 +450,53 @@ GooglePlusAPI = {
 				}
 				else if (attachment[24][4] === 'image') {
 					activity.object.attachments.push({
-						objectType : 'photo',
-						content    : attachment[21] || undefined,
-						url        : (attachment[47][0][1] === 'picasa')
+						objectType  : 'photo',
+						displayName : attachment[3] || undefined,
+						content     : attachment[21] || undefined,
+						url         : (attachment[47][0][1] === 'picasa')
 							? attachment[24][1] : undefined,
 						image : {
-							url      : imageResizeProxy
+							url       : imageResizeProxy
 								+ encodeURIComponent(attachment[41][0][1]),
-							type     : attachment[24][3]
+							type      : attachment[24][3]
 						},
 						fullImage : {
-							url      : attachment[5][1],
-							type     : attachment[24][3],
-							height   : attachment[5][2],
-							width    : attachment[5][3]
+							url       : attachment[5][1],
+							type      : attachment[24][3],
+							height    : attachment[5][2],
+							width     : attachment[5][3]
 						}
 					});
 				}
 				else if (attachment[24][4] === 'document') {
 					activity.object.attachments.push({
-						objectType   :
+						objectType  :
 							(attachment[47][0][1] === 'picasa') ? 'photo-album' : 'article',
-						displayName  : attachment[3],
-						content      : attachment[21],
-						url          : attachment[24][1]
+						displayName : attachment[3] || undefined,
+						content     : attachment[21] || undefined,
+						url         : attachment[24][1]
 					})
 				}
 				else if (attachment[24][4] === 'photo') {
 					activity.object.attachments.push({
-						objectType : 'photo',
-						content    : attachment[21] || undefined,
+						objectType  : 'photo',
+						displayName : attachment[3] || undefined,
+						content     : attachment[21] || undefined,
 						image : {
-							url      : imageResizeProxy
+							url       : imageResizeProxy
 								+ encodeURIComponent(attachment[41][1][1]),
-							type     : attachment[24][3]
+							type      : attachment[24][3]
 						},
 						fullImage : {
-							url      : attachment[5][1],
-							type     : attachment[24][3]
+							url       : attachment[5][1],
+							type      : attachment[24][3]
 						}
 					});
 				}
 			}
+		}
+		if (!activity.object.attachments.length) {
+			delete activity.object.attachments;
 		}
 		if (item[27]) {
 			activity.geocode   = item[27][0] + ' ' + item[27][1];
