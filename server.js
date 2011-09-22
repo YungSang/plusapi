@@ -1,13 +1,22 @@
 var express = require('express');
 var plusapi = require('./plusapi');
 
+var fs = require('fs');
+var md = require("node-markdown").Markdown;
+
 var username = 'yourname';
 var password = 'password';
 
 var app = express.createServer();
 
-app.get('/', function(req, res){
-	res.send('Unofficial Google+ API compatible with Google+ API');
+app.get('/', function(req, res) {
+	fs.readFile('./README.md', function (err, data) {
+		res.write('<!DOCTYPE html><html><head>');
+		res.write('<title>Unofficial Google+ API compatible with Google+ API</title>');
+		res.write('</head><body>');
+		res.write(md(data.toString()));
+		res.end('</body></html>');
+	});
 });
 
 app.get('/v1/people/me', function(req, res) {

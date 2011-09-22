@@ -32,5 +32,18 @@ It is an Unofficial Google+ API which aims for compatibility with [The Official 
 
 ## Dependencies
 
-* Express (tested with v2.4.6) <http://search.npmjs.org/#/express>
-* Request (tested with v2.1.1) <http://search.npmjs.org/#/request>
+* Node.js (tested with >= 0.4.11 < 0.5.0)  
+	<http://nodejs.org/>
+
+* Express (tested with 2.4.6)  
+	<http://search.npmjs.org/#/express>
+
+* Request (tested with 2.1.1)  
+	<http://search.npmjs.org/#/request>
+
+* Node-Markdown (tested with 0.1.0) for the static top page only  
+	<https://github.com/andris9/node-markdown>
+
+## Source
+
+* <https://github.com/YungSang/plusapi>
