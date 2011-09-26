@@ -495,19 +495,19 @@ GooglePlusAPI = {
 			}
 		};
 		if (item[77]) {
-			activity.object = extend(activity.object, {
-				id              : item[39],
-				actor : {
-					id            : item[44][1],
-					displayName   : item[44][0],
-					url           : this.BASE_URL + item[44][5],
+			activity.object.id = item[39];
+			if (item[44][1]) {
+				activity.object.actor = {
+					id          : item[44][1],
+					displayName : item[44][0],
+					url         : this.BASE_URL + item[44][5],
 					image : {
-						url         : item[44][4]
+						url       : item[44][4]
 					}
-					// item[43] via
-					// item[44] origin
-				}
-			});
+				};
+				// item[43] via
+				// item[44] origin
+			}
 		}
 		activity.object = extend(activity.object, {
 			content         : item[4],
@@ -534,10 +534,11 @@ GooglePlusAPI = {
 						objectType  : 'video',
 						displayName : attachment[3] || undefined,
 						content     : attachment[21] || undefined,
-						url         : attachment[5][1],
+						url         : (attachment[5] ? attachment[5][1] : ''),
 						image : {
 							url       : imageResizeProxy
-								+ encodeURIComponent(attachment[41][1][1]),
+								+ encodeURIComponent((attachment[41][1]
+									? attachment[41][1][1] : attachment[41][0][1])),
 							type      : 'image/jpeg'
 						}
 					});
@@ -547,8 +548,9 @@ GooglePlusAPI = {
 						objectType  : 'photo',
 						displayName : attachment[3] || undefined,
 						content     : attachment[21] || undefined,
-						url         : (attachment[47][0][1] === 'picasa')
-							? attachment[24][1] : undefined,
+						url         :
+							(attachment[47][0] && (attachment[47][0][1] === 'picasa'))
+								? attachment[24][1] : undefined,
 						image : {
 							url       : imageResizeProxy
 								+ encodeURIComponent(attachment[41][0][1]),
@@ -565,7 +567,8 @@ GooglePlusAPI = {
 				else if (attachment[24][4] === 'document') {
 					activity.object.attachments.push({
 						objectType  :
-							(attachment[47][0][1] === 'picasa') ? 'photo-album' : 'article',
+							(attachment[47] && attachment[47][0] && (attachment[47][0][1] === 'picasa'))
+								? 'photo-album' : 'article',
 						displayName : attachment[3] || undefined,
 						content     : attachment[21] || undefined,
 						url         : attachment[24][1]
@@ -578,11 +581,13 @@ GooglePlusAPI = {
 						content     : attachment[21] || undefined,
 						image : {
 							url       : imageResizeProxy
-								+ encodeURIComponent(attachment[41][1][1]),
+								+ encodeURIComponent((attachment[41][1]
+									? attachment[41][1][1] : attachment[41][0][1])),
 							type      : attachment[24][3]
 						},
 						fullImage : {
-							url       : attachment[5][1],
+							url       : (attachment[5]
+								? attachment[5][1] : attachment[24][1]),
 							type      : attachment[24][3]
 						}
 					});
