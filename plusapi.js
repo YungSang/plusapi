@@ -228,7 +228,100 @@ GooglePlusAPI = {
 							message : 'invalid data format'
 						}));
 					}
-					return callback(self.getActivityData(data));
+					return callback(self.getActivityData(data, true));
+				}
+				else {
+					return callback(self.makeErrorResponse(e, extend(response, {
+						name    : 'notFound',
+						message : 'unable to map id: ' + id
+					})));
+				}
+			}
+		);
+	},
+
+	getPlusoners : function (id, query, callback) {
+		var self = this;
+		var ps = {
+			plusoneId : id
+		};
+		if (query.maxResults) {
+			ps.num = query.maxResults;
+		}
+		request(
+			{
+				uri     : this.BASE_URL + '/_/stream/getpeople/',
+				method  : 'POST',
+				body    : querystring.stringify(ps),
+				headers : extend(this.DEFAULT_HTTP_HEADERS, {
+					'Content-Type' : 'application/x-www-form-urlencoded',
+				})
+			},
+			function (e, response, body) {
+				if (!e && response.statusCode == 200) {
+					data = vm.runInThisContext('data = (' + body.substr(5) + ')');
+					data = self.getDataByKey([data], 'os.gpp');
+					if (!data) {
+						return callback(self.makeErrorResponse({
+							name    : 'parseError',
+							message : 'invalid data format'
+						}));
+					}
+					var json = [];
+					for (var i in data) {
+						json.push({
+							kind        : 'plus#person',
+							id          : data[i][1],
+							displayName : data[i][0],
+							url         : data[i][2],
+							image : {
+								url       : data[i][3]
+							}
+						});
+					}
+					return callback(json);
+				}
+				else {
+					return callback(self.makeErrorResponse(e, extend(response, {
+						name    : 'notFound',
+						message : 'unable to map id: ' + id
+					})));
+				}
+			}
+		);
+	},
+
+	getSharers : function(id, callback) {
+		var self = this;
+		request(
+			{
+				uri     : this.BASE_URL + '/_/stream/getsharers/?id=' + id,
+				method  : 'GET',
+				headers : this.DEFAULT_HTTP_HEADERS
+			},
+			function (e, response, body) {
+				if (!e && response.statusCode == 200) {
+					data = vm.runInThisContext('data = (' + body.substr(5) + ')');
+					data = self.getDataByKey([data], 'os.sha');
+					if (!data) {
+						return callback(self.makeErrorResponse({
+							name    : 'parseError',
+							message : 'invalid data format'
+						}));
+					}
+					var json = [];
+					for (var i in data) {
+						json.push({
+							kind        : 'plus#person',
+							id          : data[i][1],
+							displayName : data[i][0],
+							url         : self.BASE_URL + data[i][5],
+							image : {
+								url       : data[i][4]
+							}
+						});
+					}
+					return callback(json);
 				}
 				else {
 					return callback(self.makeErrorResponse(e, extend(response, {
@@ -351,7 +444,7 @@ GooglePlusAPI = {
 		return json;
 	},
 
-	getActivityData : function(item) {
+	getActivityData : function(item, full) {
 		var imageResizeProxy = 'http://images0-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&gadget=a&resize_h=100&url=';
 
 		var title = item[20];
@@ -426,6 +519,7 @@ GooglePlusAPI = {
 			},
 			plusoners : {
 				totalItems    : item[73][16],
+				id            : item[73][0]
 			},
 			resharers : {
 				totalItems    : item[96],
@@ -505,7 +599,49 @@ GooglePlusAPI = {
 			activity.placeId   = item[27][4];
 			activity.placeName = item[27][2];
 		}
+		if (full && activity.object.replies.totalItems) {
+			activity.object.replies.items = [];
+			for (var i in item[7]) {
+				activity.object.replies.items.push(this.getRepliyData(item[7][i]));
+			}
+		}
+		if (full && activity.object.resharers.totalItems) {
+			activity.object.resharers.items = [];
+			for (var i in item[25]) {
+				var sharer = item[25][i];
+				activity.object.resharers.items.push({
+					kind        : 'plus#person',
+					id          : sharer[1],
+					displayName : sharer[0],
+					url         : this.BASE_URL + sharer[5],
+					image : {
+						url       : sharer[4]
+					}
+				});
+			}
+		}
 		return activity;
+	},
+
+	getRepliyData : function(comment) {
+		return {
+			kind          : 'plus#activity',
+			title         : comment[2],
+			id          	: comment[4],
+			published     : new Date(comment[3]),
+			actor : {
+				id          : comment[6],
+				displayName : comment[1],
+				url         : this.BASE_URL + comment[10],
+				image : {
+					url       : comment[16],
+				}
+			},
+			plusoners : {
+				totalItems  : comment[15][16],
+				id          : comment[15][0]
+			}
+		};
 	},
 
 	getDataByKey : function(arr, key) {

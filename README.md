@@ -13,6 +13,12 @@ It is an Unofficial Google+ API which aims for compatibility with [The Official 
 *	GET /v1/activities/*{activityId}*  
 	<http://developers.google.com/+/api/latest/activities/get>
 
+*	GET /v1/plusoners/*{plusoneId}*  
+	**Original**
+
+*	GET /v1/sharers/*{activityId}*  
+	**Original**
+
 ## Supported Common Parameters
 
 * callback

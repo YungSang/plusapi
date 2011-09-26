@@ -57,6 +57,18 @@ app.get('/v1/activities/:id', function(req, res) {
 	});
 });
 
+app.get('/v1/plusoners/:id', function(req, res) {
+	plusapi.getPlusoners(req.params.id, req.query, function(json) {
+		responseJSON(req, res, json);
+	});
+});
+
+app.get('/v1/sharers/:id', function(req, res) {
+	plusapi.getSharers(req.params.id, function(json) {
+		responseJSON(req, res, json);
+	});
+});
+
 function responseJSON(req, res, json) {
 	res.statusCode = (json.error ? json.error.code : 200);
 	res.charset = 'UTF-8';
