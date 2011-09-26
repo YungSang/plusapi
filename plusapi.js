@@ -629,6 +629,7 @@ GooglePlusAPI = {
 			title         : comment[2],
 			id          	: comment[4],
 			published     : new Date(comment[3]),
+			edited        : (comment[14] ? new Date(comment[14]) : undefined),
 			actor : {
 				id          : comment[6],
 				displayName : comment[1],
