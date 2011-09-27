@@ -484,7 +484,7 @@ GooglePlusAPI = {
 							kind        : 'plus#person',
 							id          : data[i][1],
 							displayName : data[i][0],
-							url         : self.BASE_URL + data[i][5],
+							url         : this.getAbsoluteURL(data[i][5]),
 							image : {
 								url       : data[i][4]
 							}
@@ -636,11 +636,11 @@ GooglePlusAPI = {
 				// new Date(item[38]),      posted
 				// new Date(item[70]/1000), edited
 			id                : item[8],
-			url               : this.BASE_URL + '/' + item[21],
+			url               : this.getAbsoluteURL(item[21]),
 			actor : {
 				id              : item[16],
 				displayName     : item[3],
-				url             : this.BASE_URL + item[24],
+				url             : this.getAbsoluteURL(item[24]),
 				image : {
 					url           : item[18],
 				}
@@ -669,7 +669,7 @@ GooglePlusAPI = {
 				activity.object.actor = {
 					id          : item[44][1],
 					displayName : item[44][0],
-					url         : this.BASE_URL + item[44][5],
+					url         : this.getAbsoluteURL(item[44][5]),
 					image : {
 						url       : item[44][4]
 					}
@@ -681,8 +681,7 @@ GooglePlusAPI = {
 		activity.object = extend(activity.object, {
 			content         : item[4],
 //			originalContent :
-			url             : this.BASE_URL + '/'
-				+ (item[77] ? item[77] : item[21]),
+			url             : this.getAbsoluteURL(item[77] ? item[77] : item[21]),
 			replies : {
 				totalItems    : item[93],
 			},
@@ -787,7 +786,7 @@ GooglePlusAPI = {
 					kind        : 'plus#person',
 					id          : sharer[1],
 					displayName : sharer[0],
-					url         : this.BASE_URL + sharer[5],
+					url         : this.getAbsoluteURL(sharer[5]),
 					image : {
 						url       : sharer[4]
 					}
@@ -807,7 +806,7 @@ GooglePlusAPI = {
 			actor : {
 				id          : comment[6],
 				displayName : comment[1],
-				url         : this.BASE_URL + comment[10],
+				url         : this.getAbsoluteURL(comment[10]),
 				image : {
 					url       : comment[16],
 				}
@@ -827,6 +826,18 @@ GooglePlusAPI = {
 			}
 		}
 		return null;
+	},
+
+	getAbsoluteURL : function(url) {
+		if (url.substr(0, 2) === './') {
+			return this.BASE_URL + url.substr(1);
+		}
+		else if (url.substr(0, 1) !== '/') {
+			return this.BASE_URL + '/' + url;
+		}
+		else {
+			return this.BASE_URL + url;
+		}
 	},
 
 	makeErrorResponse : function(e, response) {
