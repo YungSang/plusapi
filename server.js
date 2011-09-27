@@ -19,6 +19,18 @@ app.get('/', function(req, res) {
 	});
 });
 
+app.get('/v1/login', function(req, res) {
+	plusapi.login(username, password, function(json) {
+		responseJSON(req, res, json);
+	});
+});
+
+app.get('/v1/logout', function(req, res) {
+	plusapi.logout(function(json) {
+		responseJSON(req, res, json);
+	});
+});
+
 app.get('/v1/people/me', function(req, res) {
 	if (plusapi.isLogin()) {
 		plusapi.getProfile(null, function(json) {
@@ -47,6 +59,24 @@ app.get('/v1/people/:id([0-9]+)', function(req, res) {
 
 app.get('/v1/people/:id([0-9]+)/activities/public', function(req, res) {
 	plusapi.getPublicActivities(req.params.id, req.query, function(json) {
+		responseJSON(req, res, json);
+	});
+});
+
+app.get('/v1/circles', function(req, res) {
+	plusapi.getCircles(function(json) {
+		responseJSON(req, res, json);
+	});
+});
+
+app.get('/v1/circle/:id/activities', function(req, res) {
+	plusapi.getCircleActivities(req.params.id, req.query, function(json) {
+		responseJSON(req, res, json);
+	});
+});
+
+app.get('/v1/stream/activities', function(req, res) {
+	plusapi.getStreamActivities(req.query, function(json) {
 		responseJSON(req, res, json);
 	});
 });

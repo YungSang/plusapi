@@ -29,7 +29,7 @@ GooglePlusAPI = {
 		var self = this;
 		request(
 			{
-				uri     : this.BASE_URL + '/accounts/ClientLogin',
+				uri     : 'https://www.google.com/accounts/ClientLogin',
 				method  : 'POST',
 				body    : querystring.stringify({
 					accountType : 'HOSTED_OR_GOOGLE',
@@ -55,12 +55,35 @@ GooglePlusAPI = {
 						'Cookie'        : 'SID=' + auth_cookies['SID'],
 						'Authorization' : 'GoogleLogin auth=' + auth_cookies['Auth']
 					};
-					return callback({});
+					return callback({success : true});
 				}
 				else {
 					return callback(self.makeErrorResponse(e, extend(response, {
 						name    : 'authError',
-						message : 'could not login as username: ' + username
+						message : 'unable to login as username: ' + username
+					})));
+				}
+			}
+		);
+	},
+
+	logout : function(callback) {
+		var self = this;
+		request(
+			{
+				uri     : 'https://www.google.com/accounts/Logout',
+				method  : 'GET',
+				headers : this.DEFAULT_HTTP_HEADERS
+			},
+			function (e, response, body) {
+				if (!e && response.statusCode == 200) {
+					self.AUTH_HTTP_HEADERS = {};
+					return callback({success : true});
+				}
+				else {
+					return callback(self.makeErrorResponse(e, extend(response, {
+						name    : 'authError',
+						message : 'unable to logout'
 					})));
 				}
 			}
@@ -118,6 +141,33 @@ GooglePlusAPI = {
 			else {
 				return callback(self.getProfileData(data[2][0], data[2][1]));
 			}
+		});
+	},
+
+	getCircles : function(callback) {
+		var self = this;
+		if (!this.isLogin()) {
+			return callback(self.makeErrorResponse({
+				code    : 401,
+				name    : 'authError',
+				message : 'me'
+			}));
+		}
+		this.getOZData(null, function(data) {
+			if (data.error) {
+				return callback(data);
+			}
+			var circles = [];
+			for (var i = 0, len = data[12][0].length ; i < len ; i++) {
+				var circle = data[12][0][i];
+				circles.push({
+					kind        : 'plus#circle',
+					id          : circle[0][0],
+					displayName : circle[1][0],
+					description : circle[1][2]
+				});
+			}
+			return callback(circles);
 		});
 	},
 
@@ -191,6 +241,125 @@ GooglePlusAPI = {
 						updated  : self.getUpdated(data[0]),
 						id       : 'tag:google.com,2010:/plus/people/' + id
 							+ '/activities/public',
+						items    : self.getActivitiesData(data[0])
+					};
+					return callback(json);
+				}
+				else {
+					return callback(self.makeErrorResponse(e, extend(response, {
+						name    : 'notFound',
+						message : 'unable to map id: ' + id
+					})));
+				}
+			}
+		);
+	},
+
+	getStreamActivities : function(query, callback) {
+		var self = this;
+		if (!this.isLogin()) {
+			return callback(self.makeErrorResponse({
+				code    : 401,
+				name    : 'authError',
+				message : 'me'
+			}));
+		}
+		var qs = {
+			sp : '[1,2,null,null,null,'
+				+ (query.maxResults ? query.maxResults : 'null')
+				+ ',null,"social.google.com",[]]',
+			hl : 'en'
+		};
+		if (query.pageToken) {
+			qs.ct = query.pageToken;
+		}
+		request(
+			{
+				uri     : this.BASE_URL + '/_/stream/getactivities/?'
+					+ querystring.stringify(qs),
+				method  : 'GET',
+				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS)
+			},
+			function (e, response, body) {
+				if (!e && response.statusCode == 200) {
+					data = vm.runInThisContext('data = (' + body.substr(5) + ')');
+					data = self.getDataByKey([data], 'os.nu');
+					if (!data) {
+						return callback(self.makeErrorResponse({
+							name    : 'parseError',
+							message : 'invalid data format'
+						}));
+					}
+					var json = {
+						kind     : 'plus#activityFeed',
+						nextPageToken : data[1],
+						selfLink : 'https://www.googleapis.com/plus/v1/stream/activities?',
+						nextLink : 'https://www.googleapis.com/plus/v1/stream/activities?'
+							+ 'maxResults=' + data[2][5] + '&pageToken=' + data[1],
+						title    : 'Plus Stream Activity Feed',
+						updated  : self.getUpdated(data[0]),
+						id       : 'tag:google.com,2010:/plus/stream/activities',
+						items    : self.getActivitiesData(data[0])
+					};
+					return callback(json);
+				}
+				else {
+					return callback(self.makeErrorResponse(e, extend(response, {
+						name    : 'notFound',
+						message : 'unable to get activites'
+					})));
+				}
+			}
+		);
+	},
+
+	getCircleActivities : function(id, query, callback) {
+		var self = this;
+		if (!this.isLogin()) {
+			return callback(self.makeErrorResponse({
+				code    : 401,
+				name    : 'authError',
+				message : 'me'
+			}));
+		}
+		var qs = {
+			sp : '[1,2,null,"' + id + '",null,'
+				+ (query.maxResults ? query.maxResults : 'null')
+				+ ',null,"social.google.com",[]]',
+			hl : 'en'
+		};
+		if (query.pageToken) {
+			qs.ct = query.pageToken;
+		}
+		request(
+			{
+				uri     : this.BASE_URL + '/_/stream/getactivities/?'
+					+ querystring.stringify(qs),
+				method  : 'GET',
+				headers : this.DEFAULT_HTTP_HEADERS
+			},
+			function (e, response, body) {
+				if (!e && response.statusCode == 200) {
+					data = vm.runInThisContext('data = (' + body.substr(5) + ')');
+					data = self.getDataByKey([data], 'os.nu');
+					if (!data) {
+						return callback(self.makeErrorResponse({
+							name    : 'parseError',
+							message : 'invalid data format'
+						}));
+					}
+					var json = {
+						kind     : 'plus#activityFeed',
+						nextPageToken : data[1],
+						selfLink : 'https://www.googleapis.com/plus/v1/circle/'
+							+ id + '/activities?',
+						nextLink : 'https://www.googleapis.com/plus/v1/circle/'
+							+ id + '/activities?maxResults=' + data[2][5]
+							+ '&pageToken=' + data[1],
+						title    : 'Plus Circle Activity Feed',
+						updated  : self.getUpdated(data[0]),
+						id       : 'tag:google.com,2010:/plus/circle/' + id
+							+ '/activities',
 						items    : self.getActivitiesData(data[0])
 					};
 					return callback(json);

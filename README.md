@@ -19,6 +19,25 @@ It is an Unofficial Google+ API which aims for compatibility with [The Official 
 *	GET /v1/sharers/*{activityId}*  
 	**Original**
 
+* GET /v1/login  
+	**Original** (The credentials are hard-coded and you must modify them on your site.)
+
+* GET /v1/logout  
+	**Original**
+
+* GET /v1/people/me  
+	<http://developers.google.com/+/api/latest/people/get>  
+	(**Login required**)
+
+* GET /v1/stream/activities  
+	**Original** (**Login required**)
+
+* GET /v1/circles  
+	**Original** (**Login required**)
+
+* GET /v1/circle/*{circleId}*/activities  
+	**Original** (**Login required**)
+
 ## Supported Common Parameters
 
 * callback
