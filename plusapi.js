@@ -2,13 +2,17 @@ var request     = require('request');
 var vm          = require('vm');
 var querystring = require('querystring');
 
-function extend(a, b) {
+function extend() {
 	var x = {};
-	for (var key in a) {
-		x[key] = a[key];
-	}
-	for (var key in b) {
-		x[key] = b[key];
+	for (var i = 0, len = arguments.length ; i < len ; i++) {
+		var o = arguments[i];
+		if (typeof o !== 'object') continue;
+		for (var key in o) {
+			if ((x[key] === o[key]) || (typeof o[key] === 'undefined')) {
+				continue;
+			}
+			x[key] = o[key];
+		}
 	}
 	return x;
 }
@@ -428,7 +432,6 @@ GooglePlusAPI = {
 		if (query.maxResults) {
 			ps.num = query.maxResults;
 		}
-		var headers = extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS);
 		request(
 			{
 				uri     : this.BASE_URL + '/_/stream/getpeople/?'
@@ -437,7 +440,7 @@ GooglePlusAPI = {
 					}),
 				method  : 'POST',
 				body    : querystring.stringify(ps),
-				headers : extend(headers, {
+				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS, {
 					'Content-Type' : 'application/x-www-form-urlencoded',
 				})
 			},
