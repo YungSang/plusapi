@@ -3,7 +3,10 @@ var vm          = require('vm');
 var querystring = require('querystring');
 
 function extend(a, b) {
-	var x = a || {};
+	var x = {};
+	for (var key in a) {
+		x[key] = a[key];
+	}
 	for (var key in b) {
 		x[key] = b[key];
 	}
@@ -175,7 +178,11 @@ GooglePlusAPI = {
 		var self = this;
 		request(
 			{
-				uri     : this.BASE_URL + '/_/profiles/get/' + id + '?hl=en',
+				uri     : this.BASE_URL + '/_/profiles/get/' + id + '?'
+					+ querystring.stringify({
+						hl     : 'en',
+						_reqid : this.getReqid()
+					}),
 				method  : 'GET',
 				headers : this.DEFAULT_HTTP_HEADERS
 			},
@@ -204,10 +211,11 @@ GooglePlusAPI = {
 	getPublicActivities : function(id, query, callback) {
 		var self = this;
 		var qs = {
-			sp : '[1,2,"' + id + '",null,null,'
+			sp     : '[1,2,"' + id + '",null,null,'
 				+ (query.maxResults ? query.maxResults : 'null')
 				+ ',null,"social.google.com",[]]',
-			hl : 'en'
+			hl     : 'en',
+			_reqid : this.getReqid()
 		};
 		if (query.pageToken) {
 			qs.ct = query.pageToken;
@@ -265,10 +273,11 @@ GooglePlusAPI = {
 			}));
 		}
 		var qs = {
-			sp : '[1,2,null,null,null,'
+			sp     : '[1,2,null,null,null,'
 				+ (query.maxResults ? query.maxResults : 'null')
 				+ ',null,"social.google.com",[]]',
-			hl : 'en'
+			hl     : 'en',
+			_reqid : this.getReqid()
 		};
 		if (query.pageToken) {
 			qs.ct = query.pageToken;
@@ -323,10 +332,11 @@ GooglePlusAPI = {
 			}));
 		}
 		var qs = {
-			sp : '[1,2,null,"' + id + '",null,'
+			sp     : '[1,2,null,"' + id + '",null,'
 				+ (query.maxResults ? query.maxResults : 'null')
 				+ ',null,"social.google.com",[]]',
-			hl : 'en'
+			hl     : 'en',
+			_reqid : this.getReqid()
 		};
 		if (query.pageToken) {
 			qs.ct = query.pageToken;
@@ -336,7 +346,7 @@ GooglePlusAPI = {
 				uri     : this.BASE_URL + '/_/stream/getactivities/?'
 					+ querystring.stringify(qs),
 				method  : 'GET',
-				headers : this.DEFAULT_HTTP_HEADERS
+				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS)
 			},
 			function (e, response, body) {
 				if (!e && response.statusCode == 200) {
@@ -378,14 +388,15 @@ GooglePlusAPI = {
 		var self = this;
 		var qs = {
 			updateId : id,
-			hl       : 'en'
+			hl       : 'en',
+			_reqid   : this.getReqid()
 		};
 		request(
 			{
 				uri     : this.BASE_URL + '/_/stream/getactivity/?'
 					+ querystring.stringify(qs),
 				method  : 'GET',
-				headers : this.DEFAULT_HTTP_HEADERS
+				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS)
 			},
 			function (e, response, body) {
 				if (!e && response.statusCode == 200) {
@@ -417,12 +428,16 @@ GooglePlusAPI = {
 		if (query.maxResults) {
 			ps.num = query.maxResults;
 		}
+		var headers = extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS);
 		request(
 			{
-				uri     : this.BASE_URL + '/_/stream/getpeople/',
+				uri     : this.BASE_URL + '/_/stream/getpeople/?'
+					+ querystring.stringify({
+						_reqid : this.getReqid()
+					}),
 				method  : 'POST',
 				body    : querystring.stringify(ps),
-				headers : extend(this.DEFAULT_HTTP_HEADERS, {
+				headers : extend(headers, {
 					'Content-Type' : 'application/x-www-form-urlencoded',
 				})
 			},
@@ -464,9 +479,13 @@ GooglePlusAPI = {
 		var self = this;
 		request(
 			{
-				uri     : this.BASE_URL + '/_/stream/getsharers/?id=' + id,
+				uri     : this.BASE_URL + '/_/stream/getsharers/?'
+					+ querystring.stringify({
+						id     : id,
+						_reqid : this.getReqid()
+					}),
 				method  : 'GET',
-				headers : this.DEFAULT_HTTP_HEADERS
+				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS)
 			},
 			function (e, response, body) {
 				if (!e && response.statusCode == 200) {
@@ -484,7 +503,7 @@ GooglePlusAPI = {
 							kind        : 'plus#person',
 							id          : data[i][1],
 							displayName : data[i][0],
-							url         : this.getAbsoluteURL(data[i][5]),
+							url         : self.getAbsoluteURL(data[i][5]),
 							image : {
 								url       : data[i][4]
 							}
@@ -817,6 +836,15 @@ GooglePlusAPI = {
 			}
 		};
 	},
+
+	sequence : 0,
+
+	getReqid : function() {
+		var sequence = this.sequence++;
+		var now = new Date;
+		var seconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+		return seconds + sequence * 1E5;
+  },
 
 	getDataByKey : function(arr, key) {
 		for (var i = 0, len = arr.length ; i < len ; i++) {
