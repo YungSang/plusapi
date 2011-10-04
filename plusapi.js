@@ -267,6 +267,61 @@ GooglePlusAPI = {
 		);
 	},
 
+	getActivities : function(id, query, callback) {
+		var self = this;
+		var qs = {
+			sp     : '[1,2,"' + id + '",null,null,'
+				+ (query.maxResults ? query.maxResults : 'null')
+				+ ',null,"social.google.com",[]]',
+			hl     : 'en',
+			_reqid : this.getReqid()
+		};
+		if (query.pageToken) {
+			qs.ct = query.pageToken;
+		}
+		request(
+			{
+				uri     : this.BASE_URL + '/_/stream/getactivities/?'
+					+ querystring.stringify(qs),
+				method  : 'GET',
+				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS)
+			},
+			function (e, response, body) {
+				if (!e && response.statusCode == 200) {
+					data = vm.runInThisContext('data = (' + body.substr(5) + ')');
+					data = self.getDataByKey([data], 'os.nu');
+					if (!data) {
+						return callback(self.makeErrorResponse({
+							name    : 'parseError',
+							message : 'invalid data format'
+						}));
+					}
+					var json = {
+						kind     : 'plus#activityFeed',
+						nextPageToken : data[1],
+						selfLink : 'https://www.googleapis.com/plus/v1/people/'
+							+ id + '/activities?',
+						nextLink : 'https://www.googleapis.com/plus/v1/people/'
+							+ id + '/activities?maxResults=' + data[2][5]
+							+ '&pageToken=' + data[1],
+						title    : 'Plus User Activity Feed for ' + data[0][0][3],
+						updated  : self.getUpdated(data[0]),
+						id       : 'tag:google.com,2010:/plus/people/' + id
+							+ '/activities',
+						items    : self.getActivitiesData(data[0])
+					};
+					return callback(json);
+				}
+				else {
+					return callback(self.makeErrorResponse(e, extend(response, {
+						name    : 'notFound',
+						message : 'unable to map id: ' + id
+					})));
+				}
+			}
+		);
+	},
+
 	getStreamActivities : function(query, callback) {
 		var self = this;
 		if (!this.isLogin()) {

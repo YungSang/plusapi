@@ -63,6 +63,12 @@ app.get('/v1/people/:id([0-9]+)/activities/public', function(req, res) {
 	});
 });
 
+app.get('/v1/people/:id([0-9]+)/activities', function(req, res) {
+	plusapi.getActivities(req.params.id, req.query, function(json) {
+		responseJSON(req, res, json);
+	});
+});
+
 app.get('/v1/circles', function(req, res) {
 	plusapi.getCircles(function(json) {
 		responseJSON(req, res, json);

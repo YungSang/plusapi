@@ -10,6 +10,9 @@ It is an Unofficial Google+ API which aims for compatibility with [The Official 
 *	GET /v1/people/*{userId}*/activities/public  
 	<http://developers.google.com/+/api/latest/activities/list>
 
+*	GET /v1/people/*{userId}*/activities  
+	**Original** (**May include the limited activities if logged in**, same as the user's posts page)
+
 *	GET /v1/activities/*{activityId}*  
 	<http://developers.google.com/+/api/latest/activities/get>
 
