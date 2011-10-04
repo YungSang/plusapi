@@ -14,12 +14,16 @@ It is an Unofficial Google+ API which aims for compatibility with [The Official 
 	**Original** (**May include the limited activities if logged in**, same as the user's posts page)
 
 *	GET /v1/activities/*{activityId}*  
-	<http://developers.google.com/+/api/latest/activities/get>
+	<http://developers.google.com/+/api/latest/activities/get>  
+	(**Original: including replies and plusoneId**)
 
-*	GET /v1/plusoners/*{plusoneId}*  
+*	GET /v1/activities/*{activityId}*/sharers  
 	**Original**
 
-*	GET /v1/sharers/*{activityId}*  
+*	GET /v1/activities/*{activityId}*/audience  
+	**Original**
+
+*	GET /v1/plusoners/*{plusoneId}*  
 	**Original**
 
 * GET /v1/login  

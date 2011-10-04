@@ -93,14 +93,20 @@ app.get('/v1/activities/:id', function(req, res) {
 	});
 });
 
-app.get('/v1/plusoners/:id', function(req, res) {
-	plusapi.getPlusoners(req.params.id, req.query, function(json) {
+app.get('/v1/activities/:id/sharers', function(req, res) {
+	plusapi.getSharers(req.params.id, function(json) {
 		responseJSON(req, res, json);
 	});
 });
 
-app.get('/v1/sharers/:id', function(req, res) {
-	plusapi.getSharers(req.params.id, function(json) {
+app.get('/v1/activities/:id/audience', function(req, res) {
+	plusapi.getAudience(req.params.id, function(json) {
+		responseJSON(req, res, json);
+	});
+});
+
+app.get('/v1/plusoners/:id', function(req, res) {
+	plusapi.getPlusoners(req.params.id, req.query, function(json) {
 		responseJSON(req, res, json);
 	});
 });

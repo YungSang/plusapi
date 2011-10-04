@@ -103,7 +103,7 @@ GooglePlusAPI = {
 			return callback(self.makeErrorResponse({
 				code    : 401,
 				name    : 'authError',
-				message : 'me'
+				message : 'login required'
 			}));
 		}
 		request(
@@ -157,7 +157,7 @@ GooglePlusAPI = {
 			return callback(self.makeErrorResponse({
 				code    : 401,
 				name    : 'authError',
-				message : 'me'
+				message : 'login required'
 			}));
 		}
 		this.getOZData(null, function(data) {
@@ -328,7 +328,7 @@ GooglePlusAPI = {
 			return callback(self.makeErrorResponse({
 				code    : 401,
 				name    : 'authError',
-				message : 'me'
+				message : 'login required'
 			}));
 		}
 		var qs = {
@@ -387,7 +387,7 @@ GooglePlusAPI = {
 			return callback(self.makeErrorResponse({
 				code    : 401,
 				name    : 'authError',
-				message : 'me'
+				message : 'login required'
 			}));
 		}
 		var qs = {
@@ -549,6 +549,60 @@ GooglePlusAPI = {
 				if (!e && response.statusCode == 200) {
 					data = vm.runInThisContext('data = (' + body.substr(5) + ')');
 					data = self.getDataByKey([data], 'os.sha');
+					if (!data) {
+						return callback(self.makeErrorResponse({
+							name    : 'parseError',
+							message : 'invalid data format'
+						}));
+					}
+					var json = [];
+					for (var i in data) {
+						json.push({
+							kind        : 'plus#person',
+							id          : data[i][1],
+							displayName : data[i][0],
+							url         : self.getAbsoluteURL(data[i][5]),
+							image : {
+								url       : data[i][4]
+							}
+						});
+					}
+					return callback(json);
+				}
+				else {
+					return callback(self.makeErrorResponse(e, extend(response, {
+						name    : 'notFound',
+						message : 'unable to map id: ' + id
+					})));
+				}
+			}
+		);
+	},
+
+	getAudience : function(id, callback) {
+		var self = this;
+		if (!this.isLogin()) {
+			return callback(self.makeErrorResponse({
+				code    : 401,
+				name    : 'authError',
+				message : 'login required'
+			}));
+		}
+		request(
+			{
+				uri     : this.BASE_URL + '/_/stream/getaudience/?'
+					+ querystring.stringify({
+						id     : id,
+						buzz   : 'true',
+						_reqid : this.getReqid()
+					}),
+				method  : 'GET',
+				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS)
+			},
+			function (e, response, body) {
+				if (!e && response.statusCode == 200) {
+					data = vm.runInThisContext('data = (' + body.substr(5) + ')');
+					data = self.getDataByKey([data], 'os.aud', 2);
 					if (!data) {
 						return callback(self.makeErrorResponse({
 							name    : 'parseError',
@@ -761,7 +815,7 @@ GooglePlusAPI = {
 			},
 			plusoners : {
 				totalItems    : item[73][16],
-				id            : item[73][0]
+				id            : (item[73][16] ? item[73][0] : undefined)
 			},
 			resharers : {
 				totalItems    : item[96],
@@ -916,11 +970,12 @@ GooglePlusAPI = {
 		return seconds + sequence * 1E5;
   },
 
-	getDataByKey : function(arr, key) {
+	getDataByKey : function(arr, key, pos) {
+		if (!pos) pos = 1;
 		for (var i = 0, len = arr.length ; i < len ; i++) {
 			var data = arr[i];
 			if (data[0] === key) {
-				return data[1];
+				return data[pos];
 			}
 		}
 		return null;
