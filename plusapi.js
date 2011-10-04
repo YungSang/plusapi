@@ -679,10 +679,7 @@ GooglePlusAPI = {
 			access : {
 				kind            : "plus#acl",
 //				description     :
-				items           : [{
-					type          : 'public',
-//					id            :
-				}]
+				items           : []
 			}
 		};
 		if (item[77]) {
@@ -814,6 +811,21 @@ GooglePlusAPI = {
 					}
 				});
 			}
+		}
+		if (item[32]) {
+			activity.access.items.push({
+				type : 'public'
+			});
+		}
+		if (item[53]) {
+			activity.access.items.push({
+				type : 'limited'
+			});
+		}
+		if (item[83]) {
+			activity.access.items.push({
+				type : 'extended'
+			});
 		}
 		return activity;
 	},
