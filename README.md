@@ -21,7 +21,7 @@ It is an Unofficial Google+ API which aims for compatibility with [The Official 
 	**Original**
 
 *	GET /v1/activities/*{activityId}*/audience  
-	**Original**
+	**Original** (**Login required**)
 
 *	GET /v1/plusoners/*{plusoneId}*  
 	**Original**
