@@ -17,11 +17,17 @@ It is an Unofficial Google+ API which aims for compatibility with [The Official 
 	<http://developers.google.com/+/api/latest/activities/get>  
 	(**Original: including replies and plusoneId**)
 
-*	GET /v1/activities/*{activityId}*/sharers  
-	**Original**
+*	GET /v1/activities/*{activityId}*/people/resharers  
+	<https://developers.google.com/+/api/latest/people/listByActivity>
 
-*	GET /v1/activities/*{activityId}*/audience  
+*	GET /v1/activities/*{activityId}*/people/plusoners  
+	<https://developers.google.com/+/api/latest/people/listByActivity>
+
+*	GET /v1/activities/*{activityId}*/people/audience  
 	**Original** (**Login required**)
+
+*	GET /v1/activities/*{activityId}*/comments  
+	<https://developers.google.com/+/api/latest/comments/list>
 
 *	GET /v1/plusoners/*{plusoneId}*  
 	**Original**

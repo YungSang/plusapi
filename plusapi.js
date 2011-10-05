@@ -509,9 +509,15 @@ GooglePlusAPI = {
 							message : 'invalid data format'
 						}));
 					}
-					var json = [];
+					var json = {
+						kind          : 'plus#peopleFeed',
+						selfLink      : undefined,
+						title         : 'Plus People Feed',
+						nextPageToken : undefined,
+						items         : []
+					};
 					for (var i in data) {
-						json.push({
+						json.items.push({
 							kind        : 'plus#person',
 							id          : data[i][1],
 							displayName : data[i][0],
@@ -520,6 +526,9 @@ GooglePlusAPI = {
 								url       : data[i][3]
 							}
 						});
+					}
+					if (!json.items.length) {
+						delete json.items;
 					}
 					return callback(json);
 				}
@@ -555,9 +564,15 @@ GooglePlusAPI = {
 							message : 'invalid data format'
 						}));
 					}
-					var json = [];
+					var json = {
+						kind          : 'plus#peopleFeed',
+						selfLink      : undefined,
+						title         : 'Plus Resharing People Feed',
+						nextPageToken : undefined,
+						items         : []
+					};
 					for (var i in data) {
-						json.push({
+						json.items.push({
 							kind        : 'plus#person',
 							id          : data[i][1],
 							displayName : data[i][0],
@@ -566,6 +581,9 @@ GooglePlusAPI = {
 								url       : data[i][4]
 							}
 						});
+					}
+					if (!json.items.length) {
+						delete json.items;
 					}
 					return callback(json);
 				}
@@ -609,9 +627,15 @@ GooglePlusAPI = {
 							message : 'invalid data format'
 						}));
 					}
-					var json = [];
+					var json = {
+						kind          : 'plus#peopleFeed',
+						selfLink      : undefined,
+						title         : 'Plus Audience People Feed',
+						nextPageToken : undefined,
+						items         : []
+					};
 					for (var i in data) {
-						json.push({
+						json.items.push({
 							kind        : 'plus#person',
 							id          : data[i][1],
 							displayName : data[i][0],
@@ -620,6 +644,9 @@ GooglePlusAPI = {
 								url       : data[i][4]
 							}
 						});
+					}
+					if (!json.items.length) {
+						delete json.items;
 					}
 					return callback(json);
 				}
@@ -941,23 +968,30 @@ GooglePlusAPI = {
 
 	getRepliyData : function(comment) {
 		return {
-			kind          : 'plus#activity',
-			title         : comment[2],
-			id          	: comment[4],
-			published     : new Date(comment[3]),
-			edited        : (comment[14] ? new Date(comment[14]) : undefined),
+			kind           : 'plus#comment',
+			id             : comment[4],
+			published      : new Date(comment[3]),
+			updated        : new Date(comment[14] ? comment[14] : comment[3]),
+			edited         : (comment[14] ? new Date(comment[14]) : undefined),
 			actor : {
-				id          : comment[6],
-				displayName : comment[1],
-				url         : this.getAbsoluteURL(comment[10]),
+				id           : comment[6],
+				displayName  : comment[1],
+				url          : this.getAbsoluteURL(comment[10]),
 				image : {
-					url       : comment[16],
+					url        : comment[16],
 				}
 			},
-			plusoners : {
-				totalItems  : comment[15][16],
-				id          : comment[15][0]
+			verb           : 'post',
+			object : {
+				objectType   : 'comment',
+				content      : comment[2],
+				plusoners : {
+					totalItems : comment[15][16] || 0,
+					id         : (comment[15][16] ? comment[15][0] : undefined)
+				}
 			}
+//			selfLink       : 'https://www.googleapis.com/plus/v1/comments/'
+//				+ comment[4]
 		};
 	},
 

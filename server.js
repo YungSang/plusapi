@@ -93,15 +93,67 @@ app.get('/v1/activities/:id', function(req, res) {
 	});
 });
 
-app.get('/v1/activities/:id/sharers', function(req, res) {
+app.get('/v1/activities/:id/people/resharers', function(req, res) {
 	plusapi.getSharers(req.params.id, function(json) {
 		responseJSON(req, res, json);
 	});
 });
 
-app.get('/v1/activities/:id/audience', function(req, res) {
+app.get('/v1/activities/:id/people/plusoners', function(req, res) {
+	plusapi.getActivity(req.params.id, function(json) {
+		if (json.error) {
+			return responseJSON(req, res, json);
+		}
+		if (!json.object.plusoners.totalItems) {
+			return responseJSON(req, res, {
+				"kind"  : "plus#peopleFeed",
+				"title" : "Plus People Feed"
+			});
+		}
+		req.query.maxResults = json.object.plusoners.totalItems;
+		plusapi.getPlusoners(json.object.plusoners.id, req.query, function(json) {
+			responseJSON(req, res, json);
+		});
+	});
+});
+
+app.get('/v1/activities/:id/people/audience', function(req, res) {
 	plusapi.getAudience(req.params.id, function(json) {
 		responseJSON(req, res, json);
+	});
+});
+
+app.get('/v1/activities/:id/comments', function(req, res) {
+	plusapi.getActivity(req.params.id, function(json) {
+		if (json.error) {
+			return responseJSON(req, res, json);
+		}
+		if (!json.object.replies.totalItems) {
+			return responseJSON(req, res, {
+				kind  : 'plus#commentFeed',
+				title : 'Plus Comments Feed',
+				id    : 'tag:google.com,2010:/plus/activities/' + json.id + '/comments'
+			});
+		}
+		var response = {
+			kind    : 'plus#commentFeed',
+			title   : 'Plus Comments Feed for ' + json.title,
+			updated : undefined,
+			id      : 'tag:google.com,2010:/plus/activities/' + json.id + '/comments',
+			items   : []
+		};
+		var updated = 0;
+		for (var i in json.object.replies.items) {
+			var data = json.object.replies.items[i];
+			data.inReplyTo = [{
+				id  : json.id,
+				url : json.url
+			}];
+			response.items.push(data);
+			if (data.updated > updated) updated = data.updated;
+		}
+		response.updated = updated;
+		responseJSON(req, res, response);
 	});
 });
 
