@@ -18,7 +18,8 @@ function extend() {
 }
 
 GooglePlusAPI = {
-	BASE_URL : 'https://plus.google.com',
+	BASE_URL     : 'https://plus.google.com',
+	API_BASE_URL : 'https://www.googleapis.com/plus/v1',
 
 	OZDATA_REGEX : /<script\b[^>]*>[\s\S]*?\btick\b[\s\S]*?\bvar\s+OZ_initData\s*=\s*([{]+(?:(?:(?![}]\s*;[\s\S]{0,24}\btick\b[\s\S]{0,12}<\/script>)[\s\S])*)*[}])\s*;[\s\S]{0,24}\btick\b[\s\S]{0,12}<\/script>/i,
 
@@ -27,6 +28,7 @@ GooglePlusAPI = {
 	},
 
 	AUTH_HTTP_HEADERS : {},
+	OZ_DATA           : {},
 
 	isLogin : function() {
 		return !!this.AUTH_HTTP_HEADERS['Authorization'];
@@ -62,7 +64,12 @@ GooglePlusAPI = {
 						'Cookie'        : 'SID=' + auth_cookies['SID'],
 						'Authorization' : 'GoogleLogin auth=' + auth_cookies['Auth']
 					};
-					return callback({success : true});
+					self.getOZData(null, function(data) {
+						if (!data.error) {
+							self.OZ_DATA = data;
+						}
+						return callback(data);
+					});
 				}
 				else {
 					return callback(self.makeErrorResponse(e, extend(response, {
@@ -99,7 +106,7 @@ GooglePlusAPI = {
 
 	getOZData : function(id, callback) {
 		var self = this;
-		if (!id && !this.isLogin()) {
+		if (!this.isLogin()) {
 			return callback(self.makeErrorResponse({
 				code    : 401,
 				name    : 'authError',
@@ -138,17 +145,25 @@ GooglePlusAPI = {
 
 	getProfile : function(id, callback) {
 		var self = this;
-		this.getOZData(id, function(data) {
-			if (data.error) {
-				return callback(data);
-			}
-			if (id) {
+		if (!this.isLogin()) {
+			return callback(this.makeErrorResponse({
+				code    : 401,
+				name    : 'authError',
+				message : 'login required'
+			}));
+		}
+		if (id) {
+			this.getOZData(id, function(data) {
+				if (data.error) {
+					return callback(data);
+				}
 				return callback(self.getProfileData(data[5][0], data[5][2]));
-			}
-			else {
-				return callback(self.getProfileData(data[2][0], data[2][1]));
-			}
-		});
+			});
+		}
+		else {
+			var data = this.OZ_DATA;
+			return callback(this.getProfileData(data[2][0], data[2][1]));
+		}
 	},
 
 	getCircles : function(callback) {
@@ -160,22 +175,18 @@ GooglePlusAPI = {
 				message : 'login required'
 			}));
 		}
-		this.getOZData(null, function(data) {
-			if (data.error) {
-				return callback(data);
-			}
-			var circles = [];
-			for (var i = 0, len = data[12][0].length ; i < len ; i++) {
-				var circle = data[12][0][i];
-				circles.push({
-					kind        : 'plus#circle',
-					id          : circle[0][0],
-					displayName : circle[1][0],
-					description : circle[1][2]
-				});
-			}
-			return callback(circles);
-		});
+		var data = this.OZ_DATA;
+		var circles = [];
+		for (var i = 0, len = data[12][0].length ; i < len ; i++) {
+			var circle = data[12][0][i];
+			circles.push({
+				kind        : 'plus#circle',
+				id          : circle[0][0],
+				displayName : circle[1][0],
+				description : circle[1][2]
+			});
+		}
+		return callback(circles);
 	},
 
 	getPublicProfile : function(id, callback) {
@@ -244,11 +255,15 @@ GooglePlusAPI = {
 					var json = {
 						kind     : 'plus#activityFeed',
 						nextPageToken : data[1],
-						selfLink : 'https://www.googleapis.com/plus/v1/people/'
-							+ id + '/activities/public?',
-						nextLink : 'https://www.googleapis.com/plus/v1/people/'
-							+ id + '/activities/public?maxResults=' + data[2][5]
-							+ '&pageToken=' + data[1],
+						selfLink : self.API_BASE_URL + '/people/'
+							+ id + '/activities/public?' + querystring.stringify({
+								maxResults : data[2][5]
+							}),
+						nextLink : self.API_BASE_URL + '/people/'
+							+ id + '/activities/public?' + querystring.stringify({
+								maxResults : data[2][5],
+								pageToken  : data[1]
+							}),
 						title    : 'Plus Public Activity Feed for ' + data[0][0][3],
 						updated  : self.getUpdated(data[0]),
 						id       : 'tag:google.com,2010:/plus/people/' + id
@@ -299,11 +314,15 @@ GooglePlusAPI = {
 					var json = {
 						kind     : 'plus#activityFeed',
 						nextPageToken : data[1],
-						selfLink : 'https://www.googleapis.com/plus/v1/people/'
-							+ id + '/activities?',
-						nextLink : 'https://www.googleapis.com/plus/v1/people/'
-							+ id + '/activities?maxResults=' + data[2][5]
-							+ '&pageToken=' + data[1],
+						selfLink : self.API_BASE_URL + '/people/'
+							+ id + '/activities?' + querystring.stringify({
+								maxResults : data[2][5]
+							}),
+						nextLink : self.API_BASE_URL + '/people/'
+							+ id + '/activities?' + querystring.stringify({
+								maxResults : data[2][5],
+								pageToken  : data[1]
+							}),
 						title    : 'Plus User Activity Feed for ' + data[0][0][3],
 						updated  : self.getUpdated(data[0]),
 						id       : 'tag:google.com,2010:/plus/people/' + id
@@ -361,9 +380,15 @@ GooglePlusAPI = {
 					var json = {
 						kind     : 'plus#activityFeed',
 						nextPageToken : data[1],
-						selfLink : 'https://www.googleapis.com/plus/v1/stream/activities?',
-						nextLink : 'https://www.googleapis.com/plus/v1/stream/activities?'
-							+ 'maxResults=' + data[2][5] + '&pageToken=' + data[1],
+						selfLink : self.API_BASE_URL + '/stream/activities?'
+							+ querystring.stringify({
+								maxResults : data[2][5]
+							}),
+						nextLink : self.API_BASE_URL + '/stream/activities?'
+							+ querystring.stringify({
+								maxResults : data[2][5],
+								pageToken  : data[1]
+							}),
 						title    : 'Plus Stream Activity Feed',
 						updated  : self.getUpdated(data[0]),
 						id       : 'tag:google.com,2010:/plus/stream/activities',
@@ -420,11 +445,15 @@ GooglePlusAPI = {
 					var json = {
 						kind     : 'plus#activityFeed',
 						nextPageToken : data[1],
-						selfLink : 'https://www.googleapis.com/plus/v1/circle/'
-							+ id + '/activities?',
-						nextLink : 'https://www.googleapis.com/plus/v1/circle/'
-							+ id + '/activities?maxResults=' + data[2][5]
-							+ '&pageToken=' + data[1],
+						selfLink : self.API_BASE_URL + '/circle/'
+							+ id + '/activities?' + querystring.stringify({
+								maxResults : data[2][5]
+							}),
+						nextLink : self.API_BASE_URL + '/circle/'
+							+ id + '/activities?' + querystring.stringify({
+								maxResults : data[2][5],
+								pageToken  : data[1]
+							}),
 						title    : 'Plus Circle Activity Feed',
 						updated  : self.getUpdated(data[0]),
 						id       : 'tag:google.com,2010:/plus/circle/' + id
@@ -472,7 +501,7 @@ GooglePlusAPI = {
 				else {
 					return callback(self.makeErrorResponse(e, extend(response, {
 						name    : 'notFound',
-						message : 'unable to map id: ' + id
+						message : 'Unable to find activity with ID: ' + id
 					})));
 				}
 			}
@@ -481,11 +510,11 @@ GooglePlusAPI = {
 
 	getPlusoners : function (id, query, callback) {
 		var self = this;
-		var ps = {
+		var body = {
 			plusoneId : id
 		};
 		if (query.maxResults) {
-			ps.num = query.maxResults;
+			body.num = query.maxResults;
 		}
 		request(
 			{
@@ -494,7 +523,7 @@ GooglePlusAPI = {
 						_reqid : this.getReqid()
 					}),
 				method  : 'POST',
-				body    : querystring.stringify(ps),
+				body    : querystring.stringify(body),
 				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS, {
 					'Content-Type' : 'application/x-www-form-urlencoded',
 				})
@@ -660,6 +689,136 @@ GooglePlusAPI = {
 		);
 	},
 
+	searchPeople : function(q, query, callback) {
+		var self = this;
+		var body = {
+			srchrp : '[["' + q + '",2,null],'
+				+ (query.pageToken ? '["' + query.pageToken + '"]' : 'null') + ']'
+		};
+		request(
+			{
+				uri     : this.BASE_URL + '/_/s/query?'
+					+ querystring.stringify({
+						hl     : 'en',
+						_reqid : this.getReqid()
+					}),
+				method  : 'POST',
+				body    : querystring.stringify(body),
+				headers : extend(this.DEFAULT_HTTP_HEADERS, {
+					'Content-Type' : 'application/x-www-form-urlencoded',
+				})
+			},
+			function (e, response, body) {
+				if (!e && response.statusCode == 200) {
+					data = vm.runInThisContext('data = (' + body.substr(5) + ')');
+					data = self.getDataByKey([data], 'sp.sqr');
+					if (!data || !data[0]) {
+						return callback(self.makeErrorResponse({
+							name    : 'parseError',
+							message : 'invalid data format'
+						}));
+					}
+					var json = {
+						kind          : 'plus#peopleFeed',
+						selfLink      : self.API_BASE_URL + '/people?'
+							+ querystring.stringify({
+								query : q
+							}),
+						title         : 'Plus People Search Feed',
+						nextPageToken : data[0][2],
+						items         : []
+					};
+					for (var i in data[0][0]) {
+						var person = data[0][0][i];
+						json.items.push({
+							kind        : 'plus#person',
+							id          : person[0][2],
+							displayName : person[1][0],
+							url         : person[0][4],
+							image : {
+								url       : person[1][8]
+							}
+						});
+					}
+					if (!json.items.length) {
+						delete json.items;
+					}
+					return callback(json);
+				}
+				else {
+					return callback(self.makeErrorResponse(e, extend(response, {
+						name    : 'notFound',
+						message : 'unable to find query: ' + q
+					})));
+				}
+			}
+		);
+	},
+
+	searchActivities : function(q, query, callback) {
+		var self = this;
+		if (!query.maxResults) query.maxResults = 10;
+		var body = {
+			srchrp : '[["' + q + '",3,'
+				+ ((query.orderBy === 'best') ? '1' : '2') + '],null,'
+				+ (query.pageToken ? '["' + query.pageToken + '"]' : 'null') + ']'
+		};
+		request(
+			{
+				uri     : this.BASE_URL + '/_/s/query?'
+					+ querystring.stringify({
+						hl     : 'en',
+						_reqid : this.getReqid()
+					}),
+				method  : 'POST',
+				body    : querystring.stringify(body),
+				headers : extend(this.DEFAULT_HTTP_HEADERS, {
+					'Content-Type' : 'application/x-www-form-urlencoded',
+				})
+			},
+			function (e, response, body) {
+				if (!e && response.statusCode == 200) {
+					data = vm.runInThisContext('data = (' + body.substr(5) + ')');
+					data = self.getDataByKey([data], 'sp.sqr');
+					if (!data || !data[1]) {
+						return callback(self.makeErrorResponse({
+							name    : 'parseError',
+							message : 'invalid data format'
+						}));
+					}
+					var qs = {
+						query      : q,
+						maxResults : data[1][0][2][5],
+					};
+					if (data[1][0][2][11][2] == 1) {
+						qs.orderBy = 'best';
+					}
+					var json = {
+						kind     : 'plus#activityFeed',
+						nextPageToken : data[1][2],
+						selfLink : self.API_BASE_URL + '/activities?'
+							+ querystring.stringify(qs),
+						nextLink : self.API_BASE_URL + '/activities?'
+							+ querystring.stringify(extend(qs, {
+								pageToken : data[1][2]
+							})),
+						title    : 'Plus Search for ' + q,
+						updated  : self.getUpdated(data[1][0][0]),
+						id       : 'tag:google.com,2010:buzz-search-feed:???',
+						items    : self.getActivitiesData(data[1][0][0])
+					};
+					return callback(json);
+				}
+				else {
+					return callback(self.makeErrorResponse(e, extend(response, {
+						name    : 'notFound',
+						message : 'unable to find query: ' + q
+					})));
+				}
+			}
+		);
+	},
+
 	getProfileData : function(id, data) {
 		var genders = {
 			0 : '',
@@ -722,7 +881,7 @@ GooglePlusAPI = {
 			type  : 'profile'
 		});
 		json.urls.push({
-			value : 'https://www.googleapis.com/plus/v1/people/' + id,
+			value : this.API_BASE_URL + '/people/' + id,
 			type  : 'json'
 		});
 		for (var i in data[8][1]) {
@@ -787,9 +946,9 @@ GooglePlusAPI = {
 //			placeholder       :
 			title             : title,
 			published         : new Date(item[5]),
-			updated           : new Date(item[38]),
+			updated           : new Date(item[30]/1000), // new Date(item[38]),
 			edited            : (item[70] ? new Date(item[70]/1000) : undefined),
-			latest            : new Date(item[30]/1000),
+//			latest            : new Date(item[30]/1000),
 				// new Date(item[30]/1000), updated (including +1 and comment)
 				// new Date(item[38]),      posted
 				// new Date(item[70]/1000), edited
@@ -839,13 +998,16 @@ GooglePlusAPI = {
 			url             : this.getAbsoluteURL(item[77] ? item[77] : item[21]),
 			replies : {
 				totalItems    : item[93],
+				selfLink      : this.API_BASE_URL + '/activities/' + item[8] + '/comments'
 			},
 			plusoners : {
 				totalItems    : item[73][16],
-				id            : (item[73][16] ? item[73][0] : undefined)
+				id            : (item[73][16] ? item[73][0] : undefined),
+				selfLink      : this.API_BASE_URL + '/activities/' + item[8] + '/people/plusoners'
 			},
 			resharers : {
 				totalItems    : item[96],
+				selfLink      : this.API_BASE_URL + '/activities/' + item[8] + '/people/resharers'
 			},
 			attachments     : []
 		});
@@ -990,8 +1152,7 @@ GooglePlusAPI = {
 					id         : (comment[15][16] ? comment[15][0] : undefined)
 				}
 			}
-//			selfLink       : 'https://www.googleapis.com/plus/v1/comments/'
-//				+ comment[4]
+//			selfLink       : this.API_BASE_URL + 'comments/' + comment[4]
 		};
 	},
 

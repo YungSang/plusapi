@@ -31,26 +31,6 @@ app.get('/v1/logout', function(req, res) {
 	});
 });
 
-app.get('/v1/people/me', function(req, res) {
-	if (plusapi.isLogin()) {
-		plusapi.getProfile(null, function(json) {
-			responseJSON(req, res, json);
-		});
-	}
-	else {
-		plusapi.login(username, password, function(json) {
-			if (json.error) {
-				responseJSON(req, res, json);
-			}
-			else {
-				plusapi.getProfile(null, function(json) {
-					responseJSON(req, res, json);
-				});
-			}
-		});
-	}
-});
-
 app.get('/v1/people/:id([0-9]+)', function(req, res) {
 	plusapi.getPublicProfile(req.params.id, function(json) {
 		responseJSON(req, res, json);
@@ -69,20 +49,32 @@ app.get('/v1/people/:id([0-9]+)/activities', function(req, res) {
 	});
 });
 
-app.get('/v1/circles', function(req, res) {
+app.get('/v1/people', function(req, res) {
+	plusapi.searchPeople(req.query.query, req.query, function(json) {
+		responseJSON(req, res, json);
+	});
+});
+
+app.get('/v1/people/me', function(req, res) {
+	plusapi.getProfile(null, function(json) {
+		responseJSON(req, res, json);
+	});
+});
+
+app.get('/v1/people/me/activities/stream', function(req, res) {
+	plusapi.getStreamActivities(req.query, function(json) {
+		responseJSON(req, res, json);
+	});
+});
+
+app.get('/v1/people/me/circles', function(req, res) {
 	plusapi.getCircles(function(json) {
 		responseJSON(req, res, json);
 	});
 });
 
-app.get('/v1/circle/:id/activities', function(req, res) {
+app.get('/v1/people/me/activities/circle/:id', function(req, res) {
 	plusapi.getCircleActivities(req.params.id, req.query, function(json) {
-		responseJSON(req, res, json);
-	});
-});
-
-app.get('/v1/stream/activities', function(req, res) {
-	plusapi.getStreamActivities(req.query, function(json) {
 		responseJSON(req, res, json);
 	});
 });
@@ -154,6 +146,12 @@ app.get('/v1/activities/:id/comments', function(req, res) {
 		}
 		response.updated = updated;
 		responseJSON(req, res, response);
+	});
+});
+
+app.get('/v1/activities', function(req, res) {
+	plusapi.searchActivities(req.query.query, req.query, function(json) {
+		responseJSON(req, res, json);
 	});
 });
 
