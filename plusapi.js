@@ -132,6 +132,59 @@ GooglePlusAPI = {
 		}
 	},
 
+	getPages : function(callback) {
+		var self = this;
+		if (!this.isLogin()) {
+			return callback(this.makeErrorResponse({
+				code    : 401,
+				name    : 'authError',
+				message : 'login required'
+			}));
+		}
+		request(
+			{
+				uri     : this.BASE_URL + '/u/0/_/pages/getidentities/?'
+					+ querystring.stringify({
+						hl     : 'en',
+						_reqid : this.getReqid()
+					}),
+				method  : 'GET',
+				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS)
+			},
+			function (e, response, body) {
+				if (!e && response.statusCode == 200) {
+					data = vm.runInThisContext('data = (' + body.substr(5) + ')');
+					data = self.getDataByKey([data], 'ope.gmir');
+					if (!data) {
+						return callback(self.makeErrorResponse({
+							name    : 'parseError',
+							message : 'invalid data format'
+						}));
+					}
+					var pages = [];
+					data.forEach(function(page) {
+						if (page[1]) {
+							pages.push({
+								kind     : 'plus#page',
+								category : page[1][0],
+								id       : page[30],
+								name     : page[4][3],
+								icon     : page[3]
+							});
+						}
+					});
+					return callback(pages);
+				}
+				else {
+					return callback(self.makeErrorResponse(e, extend(response, {
+						name    : 'notFound',
+						message : 'unable to find any pages'
+					})));
+				}
+			}
+		);
+	},
+
 	getCircles : function(callback) {
 		var self = this;
 		if (!this.isLogin()) {

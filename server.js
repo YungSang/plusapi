@@ -73,6 +73,12 @@ app.get('/v1/people/me/circles', function(req, res) {
 	});
 });
 
+app.get('/v1/people/me/pages', function(req, res) {
+	plusapi.getPages(function(json) {
+		responseJSON(req, res, json);
+	});
+});
+
 app.get('/v1/people/me/activities/circle/:id', function(req, res) {
 	plusapi.getCircleActivities(req.params.id, req.query, function(json) {
 		responseJSON(req, res, json);

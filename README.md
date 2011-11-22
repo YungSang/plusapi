@@ -29,6 +29,9 @@ It is an Unofficial Google+ API which aims for compatibility with [The Official 
 * GET /v1/people/me/activities/stream  
 	**Original** (**Login required**)
 
+* GET /v1/people/me/pages  
+	**Original** (**Login required**)
+
 * GET /v1/people/me/circles  
 	**Original** (**Login required**)
 
