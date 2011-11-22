@@ -21,8 +21,6 @@ GooglePlusAPI = {
 	BASE_URL     : 'https://plus.google.com',
 	API_BASE_URL : 'https://www.googleapis.com/plus/v1',
 
-	OZDATA_REGEX : /<script\b[^>]*>[\s\S]*?\btick\b[\s\S]*?\bvar\s+OZ_initData\s*=\s*([{]+(?:(?:(?![}]\s*;[\s\S]{0,24}\btick\b[\s\S]{0,12}<\/script>)[\s\S])*)*[}])\s*;[\s\S]{0,24}\btick\b[\s\S]{0,12}<\/script>/i,
-
 	DEFAULT_HTTP_HEADERS : {
 		'User-Agent' : 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_3; en-us) AppleWebKit/534.1+ (KHTML, like Gecko) Version/5.0 Safari/533.16'
 	},
@@ -64,11 +62,21 @@ GooglePlusAPI = {
 						'Cookie'        : 'SID=' + auth_cookies['SID'],
 						'Authorization' : 'GoogleLogin auth=' + auth_cookies['Auth']
 					};
-					self.getOZData(null, function(data) {
+					self.getInitialData(1, function(data) {
 						if (!data.error) {
-							self.OZ_DATA = data;
+							self.OZ_DATA[1] = data;
 						}
 						return callback(data);
+					});
+					self.getInitialData(2, function(data) {
+						if (!data.error) {
+							self.OZ_DATA[2] = data;
+						}
+					});
+					self.getInitialData(12, function(data) {
+						if (!data.error) {
+							self.OZ_DATA[12] = data;
+						}
 					});
 				}
 				else {
@@ -104,45 +112,6 @@ GooglePlusAPI = {
 		);
 	},
 
-	getOZData : function(id, callback) {
-		var self = this;
-		if (!this.isLogin()) {
-			return callback(self.makeErrorResponse({
-				code    : 401,
-				name    : 'authError',
-				message : 'login required'
-			}));
-		}
-		request(
-			{
-				uri     : this.BASE_URL + '/' + (id ? id : '') + '?hl=en',
-				method  : 'GET',
-				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS)
-			},
-			function (e, response, body) {
-				if (!e && response.statusCode == 200) {
-					var data = body.match(self.OZDATA_REGEX);
-					if (data) {
-						data = vm.runInThisContext('data = (' + data[1] + ')');
-						return callback(data);
-					}
-					else {
-						return callback(self.makeErrorResponse({
-							name    : 'parseError',
-							message : 'invalid data format'
-						}));
-					}
-				}
-				else {
-					return callback(self.makeErrorResponse(e, extend(response, {
-						name    : 'notFound',
-						message : 'unable to map id: ' + (id ? id : 'me')
-					})));
-				}
-			}
-		);
-	},
-
 	getProfile : function(id, callback) {
 		var self = this;
 		if (!this.isLogin()) {
@@ -153,11 +122,8 @@ GooglePlusAPI = {
 			}));
 		}
 		if (id) {
-			this.getOZData(id, function(data) {
-				if (data.error) {
-					return callback(data);
-				}
-				return callback(self.getProfileData(data[5][0], data[5][2]));
+			this.getPublicProfile(id, function(data) {
+				return callback(data);
 			});
 		}
 		else {
@@ -1163,7 +1129,46 @@ GooglePlusAPI = {
 		var now = new Date;
 		var seconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
 		return seconds + sequence * 1E5;
-  },
+	},
+
+	getInitialData : function(key, callback) {
+		var self = this;
+		request(
+			{
+				uri     : this.BASE_URL + '/u/0/_/initialdata?' +
+					querystring.stringify({
+						hl     : 'en',
+						key    : key,
+						_reqid : this.getReqid(),
+						rt     : 'j'
+					}),
+				method  : 'GET',
+				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS)
+			},
+			function (e, response, body) {
+				if (!e && response.statusCode == 200) {
+					data = vm.runInThisContext('data = (' + body.substr(5) + ')');
+					data = self.getDataByKey(data[0], 'idr');
+					if (data) {
+						data = vm.runInThisContext('data = (' + data + ')');
+						return callback(data[key]);
+					}
+					else {
+						return callback(self.makeErrorResponse({
+							name    : 'parseError',
+							message : 'invalid data format'
+						}));
+					}
+				}
+				else {
+					return callback(self.makeErrorResponse(e, extend(response, {
+						name    : 'notFound',
+						message : 'unable to map key: ' + key
+					})));
+				}
+			}
+		);
+	},
 
 	getDataByKey : function(arr, key, pos) {
 		if (!pos) pos = 1;
