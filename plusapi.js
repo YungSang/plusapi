@@ -146,7 +146,8 @@ GooglePlusAPI = {
 				uri     : this.BASE_URL + '/u/0/_/pages/getidentities/?'
 					+ querystring.stringify({
 						hl     : 'en',
-						_reqid : this.getReqid()
+						_reqid : this.getReqid(),
+						rt     : 'j'
 					}),
 				method  : 'GET',
 				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS)
@@ -154,7 +155,7 @@ GooglePlusAPI = {
 			function (e, response, body) {
 				if (!e && response.statusCode == 200) {
 					data = vm.runInThisContext('data = (' + body.substr(5) + ')');
-					data = self.getDataByKey([data], 'ope.gmir');
+					data = self.getDataByKey(data[0], 'ope.gmir');
 					if (!data) {
 						return callback(self.makeErrorResponse({
 							name    : 'parseError',
@@ -215,7 +216,8 @@ GooglePlusAPI = {
 				uri     : this.BASE_URL + '/_/profiles/get/' + id + '?'
 					+ querystring.stringify({
 						hl     : 'en',
-						_reqid : this.getReqid()
+						_reqid : this.getReqid(),
+						rt     : 'j'
 					}),
 				method  : 'GET',
 				headers : this.DEFAULT_HTTP_HEADERS
@@ -223,7 +225,7 @@ GooglePlusAPI = {
 			function (e, response, body) {
 				if (!e && response.statusCode == 200) {
 					data = vm.runInThisContext('data = (' + body.substr(5) + ')');
-					data = self.getDataByKey([data], 'op.gp');
+					data = self.getDataByKey(data[0], 'op.gp');
 					if (!data) {
 						return callback(self.makeErrorResponse({
 							name    : 'parseError',
@@ -249,7 +251,8 @@ GooglePlusAPI = {
 				+ (query.maxResults ? query.maxResults : 'null')
 				+ ',null,"social.google.com",[]]',
 			hl     : 'en',
-			_reqid : this.getReqid()
+			_reqid : this.getReqid(),
+			rt     : 'j'
 		};
 		if (query.pageToken) {
 			qs.ct = query.pageToken;
@@ -264,7 +267,7 @@ GooglePlusAPI = {
 			function (e, response, body) {
 				if (!e && response.statusCode == 200) {
 					data = vm.runInThisContext('data = (' + body.substr(5) + ')');
-					data = self.getDataByKey([data], 'os.nu');
+					data = self.getDataByKey(data[0], 'os.nu');
 					if (!data) {
 						return callback(self.makeErrorResponse({
 							name    : 'parseError',
@@ -308,7 +311,8 @@ GooglePlusAPI = {
 				+ (query.maxResults ? query.maxResults : 'null')
 				+ ',null,"social.google.com",[]]',
 			hl     : 'en',
-			_reqid : this.getReqid()
+			_reqid : this.getReqid(),
+			rt     : 'j'
 		};
 		if (query.pageToken) {
 			qs.ct = query.pageToken;
@@ -323,7 +327,7 @@ GooglePlusAPI = {
 			function (e, response, body) {
 				if (!e && response.statusCode == 200) {
 					data = vm.runInThisContext('data = (' + body.substr(5) + ')');
-					data = self.getDataByKey([data], 'os.nu');
+					data = self.getDataByKey(data[0], 'os.nu');
 					if (!data) {
 						return callback(self.makeErrorResponse({
 							name    : 'parseError',
@@ -374,7 +378,8 @@ GooglePlusAPI = {
 				+ (query.maxResults ? query.maxResults : 'null')
 				+ ',null,"social.google.com",[]]',
 			hl     : 'en',
-			_reqid : this.getReqid()
+			_reqid : this.getReqid(),
+			rt     : 'j'
 		};
 		if (query.pageToken) {
 			qs.ct = query.pageToken;
@@ -389,7 +394,7 @@ GooglePlusAPI = {
 			function (e, response, body) {
 				if (!e && response.statusCode == 200) {
 					data = vm.runInThisContext('data = (' + body.substr(5) + ')');
-					data = self.getDataByKey([data], 'os.nu');
+					data = self.getDataByKey(data[0], 'os.nu');
 					if (!data) {
 						return callback(self.makeErrorResponse({
 							name    : 'parseError',
@@ -439,7 +444,8 @@ GooglePlusAPI = {
 				+ (query.maxResults ? query.maxResults : 'null')
 				+ ',null,"social.google.com",[]]',
 			hl     : 'en',
-			_reqid : this.getReqid()
+			_reqid : this.getReqid(),
+			rt     : 'j'
 		};
 		if (query.pageToken) {
 			qs.ct = query.pageToken;
@@ -454,7 +460,7 @@ GooglePlusAPI = {
 			function (e, response, body) {
 				if (!e && response.statusCode == 200) {
 					data = vm.runInThisContext('data = (' + body.substr(5) + ')');
-					data = self.getDataByKey([data], 'os.nu');
+					data = self.getDataByKey(data[0], 'os.nu');
 					if (!data) {
 						return callback(self.makeErrorResponse({
 							name    : 'parseError',
@@ -496,7 +502,8 @@ GooglePlusAPI = {
 		var qs = {
 			updateId : id,
 			hl       : 'en',
-			_reqid   : this.getReqid()
+			_reqid   : this.getReqid(),
+			rt       : 'j'
 		};
 		request(
 			{
@@ -508,7 +515,7 @@ GooglePlusAPI = {
 			function (e, response, body) {
 				if (!e && response.statusCode == 200) {
 					data = vm.runInThisContext('data = (' + body.substr(5) + ')');
-					data = self.getDataByKey([data], 'os.u');
+					data = self.getDataByKey(data[0], 'os.u');
 					if (!data) {
 						return callback(self.makeErrorResponse({
 							name    : 'parseError',
@@ -539,7 +546,8 @@ GooglePlusAPI = {
 			{
 				uri     : this.BASE_URL + '/_/stream/getpeople/?'
 					+ querystring.stringify({
-						_reqid : this.getReqid()
+						_reqid : this.getReqid(),
+						rt     : 'j'
 					}),
 				method  : 'POST',
 				body    : querystring.stringify(body),
@@ -550,7 +558,7 @@ GooglePlusAPI = {
 			function (e, response, body) {
 				if (!e && response.statusCode == 200) {
 					data = vm.runInThisContext('data = (' + body.substr(5) + ')');
-					data = self.getDataByKey([data], 'os.gpp');
+					data = self.getDataByKey(data[0], 'os.gpp');
 					if (!data) {
 						return callback(self.makeErrorResponse({
 							name    : 'parseError',
@@ -597,7 +605,8 @@ GooglePlusAPI = {
 				uri     : this.BASE_URL + '/_/stream/getsharers/?'
 					+ querystring.stringify({
 						id     : id,
-						_reqid : this.getReqid()
+						_reqid : this.getReqid(),
+						rt     : 'j'
 					}),
 				method  : 'GET',
 				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS)
@@ -605,7 +614,7 @@ GooglePlusAPI = {
 			function (e, response, body) {
 				if (!e && response.statusCode == 200) {
 					data = vm.runInThisContext('data = (' + body.substr(5) + ')');
-					data = self.getDataByKey([data], 'os.sha');
+					data = self.getDataByKey(data[0], 'os.sha');
 					if (!data) {
 						return callback(self.makeErrorResponse({
 							name    : 'parseError',
@@ -660,7 +669,8 @@ GooglePlusAPI = {
 					+ querystring.stringify({
 						id     : id,
 						buzz   : 'true',
-						_reqid : this.getReqid()
+						_reqid : this.getReqid(),
+						rt     : 'j'
 					}),
 				method  : 'GET',
 				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS)
@@ -668,7 +678,7 @@ GooglePlusAPI = {
 			function (e, response, body) {
 				if (!e && response.statusCode == 200) {
 					data = vm.runInThisContext('data = (' + body.substr(5) + ')');
-					data = self.getDataByKey([data], 'os.aud', 2);
+					data = self.getDataByKey(data[0], 'os.aud', 2);
 					if (!data) {
 						return callback(self.makeErrorResponse({
 							name    : 'parseError',
@@ -719,7 +729,8 @@ GooglePlusAPI = {
 				uri     : this.BASE_URL + '/_/s/query?'
 					+ querystring.stringify({
 						hl     : 'en',
-						_reqid : this.getReqid()
+						_reqid : this.getReqid(),
+						rt     : 'j'
 					}),
 				method  : 'POST',
 				body    : querystring.stringify(body),
@@ -730,7 +741,7 @@ GooglePlusAPI = {
 			function (e, response, body) {
 				if (!e && response.statusCode == 200) {
 					data = vm.runInThisContext('data = (' + body.substr(5) + ')');
-					data = self.getDataByKey([data], 'sp.sqr');
+					data = self.getDataByKey(data[0], 'sp.sqr');
 					if (!data || !data[0]) {
 						return callback(self.makeErrorResponse({
 							name    : 'parseError',
@@ -787,7 +798,8 @@ GooglePlusAPI = {
 				uri     : this.BASE_URL + '/_/s/query?'
 					+ querystring.stringify({
 						hl     : 'en',
-						_reqid : this.getReqid()
+						_reqid : this.getReqid(),
+						rt     : 'j'
 					}),
 				method  : 'POST',
 				body    : querystring.stringify(body),
@@ -798,7 +810,7 @@ GooglePlusAPI = {
 			function (e, response, body) {
 				if (!e && response.statusCode == 200) {
 					data = vm.runInThisContext('data = (' + body.substr(5) + ')');
-					data = self.getDataByKey([data], 'sp.sqr');
+					data = self.getDataByKey(data[0], 'sp.sqr');
 					if (!data || !data[1]) {
 						return callback(self.makeErrorResponse({
 							name    : 'parseError',
