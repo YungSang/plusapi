@@ -246,23 +246,25 @@ GooglePlusAPI = {
 
 	getPublicActivities : function(id, query, callback) {
 		var self = this;
-		var qs = {
-			sp     : '[1,2,"' + id + '",null,null,'
+		var body = {
+			hl      : 'en',
+			'f.req' : '[[1,2,"' + id + '",null,null,'
 				+ (query.maxResults ? query.maxResults : 'null')
-				+ ',null,"social.google.com",[]]',
-			hl     : 'en',
-			_reqid : this.getReqid(),
-			rt     : 'j'
+				+ ',null,"social.google.com",[],null,null,null,null,null,null,[],null,0,0],'
+				+ (query.pageToken ? '"' + query.pageToken + '"' : 'null') + ']'
 		};
-		if (query.pageToken) {
-			qs.ct = query.pageToken;
-		}
 		request(
 			{
 				uri     : this.BASE_URL + '/_/stream/getactivities/?'
-					+ querystring.stringify(qs),
-				method  : 'GET',
-				headers : this.DEFAULT_HTTP_HEADERS
+					+ querystring.stringify({
+						_reqid : this.getReqid(),
+						rt     : 'j'
+					}),
+				method  : 'POST',
+				body    : querystring.stringify(body),
+				headers : extend(this.DEFAULT_HTTP_HEADERS, {
+					'Content-Type' : 'application/x-www-form-urlencoded',
+				})
 			},
 			function (e, response, body) {
 				if (!e && response.statusCode == 200) {
@@ -306,23 +308,25 @@ GooglePlusAPI = {
 
 	getActivities : function(id, query, callback) {
 		var self = this;
-		var qs = {
-			sp     : '[1,2,"' + id + '",null,null,'
+		var body = {
+			hl      : 'en',
+			'f.req' : '[[1,2,"' + id + '",null,null,'
 				+ (query.maxResults ? query.maxResults : 'null')
-				+ ',null,"social.google.com",[]]',
-			hl     : 'en',
-			_reqid : this.getReqid(),
-			rt     : 'j'
+				+ ',null,"social.google.com",[],null,null,null,null,null,null,[],null,0,0],'
+				+ (query.pageToken ? '"' + query.pageToken + '"' : 'null') + ']'
 		};
-		if (query.pageToken) {
-			qs.ct = query.pageToken;
-		}
 		request(
 			{
 				uri     : this.BASE_URL + '/_/stream/getactivities/?'
-					+ querystring.stringify(qs),
-				method  : 'GET',
-				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS)
+					+ querystring.stringify({
+						_reqid : this.getReqid(),
+						rt     : 'j'
+					}),
+				method  : 'POST',
+				body    : querystring.stringify(body),
+				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS, {
+					'Content-Type' : 'application/x-www-form-urlencoded',
+				})
 			},
 			function (e, response, body) {
 				if (!e && response.statusCode == 200) {
@@ -373,23 +377,25 @@ GooglePlusAPI = {
 				message : 'login required'
 			}));
 		}
-		var qs = {
-			sp     : '[1,2,null,null,null,'
+		var body = {
+			hl      : 'en',
+			'f.req' : '[[1,2,"' + id + '",null,null,'
 				+ (query.maxResults ? query.maxResults : 'null')
-				+ ',null,"social.google.com",[]]',
-			hl     : 'en',
-			_reqid : this.getReqid(),
-			rt     : 'j'
+				+ ',null,"social.google.com",[],null,null,null,null,null,null,[],null,0,0],'
+				+ (query.pageToken ? '"' + query.pageToken + '"' : 'null') + ']'
 		};
-		if (query.pageToken) {
-			qs.ct = query.pageToken;
-		}
 		request(
 			{
 				uri     : this.BASE_URL + '/_/stream/getactivities/?'
-					+ querystring.stringify(qs),
-				method  : 'GET',
-				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS)
+					+ querystring.stringify({
+						_reqid : this.getReqid(),
+						rt     : 'j'
+					}),
+				method  : 'POST',
+				body    : querystring.stringify(body),
+				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS, {
+					'Content-Type' : 'application/x-www-form-urlencoded',
+				})
 			},
 			function (e, response, body) {
 				if (!e && response.statusCode == 200) {
@@ -439,23 +445,25 @@ GooglePlusAPI = {
 				message : 'login required'
 			}));
 		}
-		var qs = {
-			sp     : '[1,2,null,"' + id + '",null,'
+		var body = {
+			hl      : 'en',
+			'f.req' : '[[1,2,"' + id + '",null,null,'
 				+ (query.maxResults ? query.maxResults : 'null')
-				+ ',null,"social.google.com",[]]',
-			hl     : 'en',
-			_reqid : this.getReqid(),
-			rt     : 'j'
+				+ ',null,"social.google.com",[],null,null,null,null,null,null,[],null,0,0],'
+				+ (query.pageToken ? '"' + query.pageToken + '"' : 'null') + ']'
 		};
-		if (query.pageToken) {
-			qs.ct = query.pageToken;
-		}
 		request(
 			{
 				uri     : this.BASE_URL + '/_/stream/getactivities/?'
-					+ querystring.stringify(qs),
-				method  : 'GET',
-				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS)
+					+ querystring.stringify({
+						_reqid : this.getReqid(),
+						rt     : 'j'
+				}),
+				method  : 'POST',
+				body    : querystring.stringify(body),
+				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS, {
+					'Content-Type' : 'application/x-www-form-urlencoded',
+				})
 			},
 			function (e, response, body) {
 				if (!e && response.statusCode == 200) {
