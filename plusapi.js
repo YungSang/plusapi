@@ -63,18 +63,18 @@ GooglePlusAPI = {
 						'Authorization' : 'GoogleLogin auth=' + auth_cookies['Auth']
 					};
 					self.getInitialData(1, function(data) {
-						if (!data.error) {
+						if (data && !data.error) {
 							self.OZ_DATA[1] = data;
 						}
 						return callback(data);
 					});
 					self.getInitialData(2, function(data) {
-						if (!data.error) {
+						if (data && !data.error) {
 							self.OZ_DATA[2] = data;
 						}
 					});
 					self.getInitialData(12, function(data) {
-						if (!data.error) {
+						if (data && !data.error) {
 							self.OZ_DATA[12] = data;
 						}
 					});
@@ -1081,7 +1081,7 @@ GooglePlusAPI = {
 							type      : attachment[24][3]
 						},
 						fullImage : {
-							url       : attachment[5][1],
+							url       : attachment[5][1] || attachment[41][0][1],
 							type      : attachment[24][3],
 							height    : attachment[5][2],
 							width     : attachment[5][3]
@@ -1110,8 +1110,8 @@ GooglePlusAPI = {
 							type      : attachment[24][3]
 						},
 						fullImage : {
-							url       : (attachment[5]
-								? attachment[5][1] : attachment[24][1]),
+							url       : (attachment[5] && attachment[5][1]) || (attachment[41][1]
+								? attachment[41][1][1] : attachment[41][0][1]),
 							type      : attachment[24][3]
 						}
 					});
@@ -1206,17 +1206,22 @@ GooglePlusAPI = {
 
 	getInitialData : function(key, callback) {
 		var self = this;
+		var body = {
+			key : key
+		};
 		request(
 			{
 				uri     : this.BASE_URL + '/u/0/_/initialdata?' +
 					querystring.stringify({
 						hl     : 'en',
-						key    : key,
 						_reqid : this.getReqid(),
 						rt     : 'j'
 					}),
-				method  : 'GET',
-				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS)
+				method  : 'POST',
+				body    : querystring.stringify(body),
+				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS, {
+					'Content-Type' : 'application/x-www-form-urlencoded',
+				})
 			},
 			function (e, response, body) {
 				if (!e && response.statusCode == 200) {
