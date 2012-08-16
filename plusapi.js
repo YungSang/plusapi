@@ -38,17 +38,17 @@ GooglePlusAPI = {
 		var form = {};
 		request(
 			{
-				uri : 'https://accounts.google.com/Login',
+				uri     : 'https://accounts.google.com/Login',
 				headers : this.DEFAULT_HTTP_HEADERS
 			},
 			function (e, response, body) {
 				if (!e && response.statusCode == 200) {
 					jsdom.env({
-						html: body,
-						scripts: [
+						html    : body,
+						scripts : [
 							'http://code.jquery.com/jquery-1.5.min.js'
 						],
-						done: function(err, window) {
+						done    : function(err, window) {
 							var $ = window.$;
 							$('#gaia_loginform input[type="hidden"]').each(function() {
 								var $this = $(this);
@@ -61,7 +61,6 @@ GooglePlusAPI = {
 			}
 		);
 	},
-
 
 	doLogin : function(form, username, password, callback) {
 		var self = this;
