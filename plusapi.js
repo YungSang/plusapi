@@ -1,5 +1,6 @@
 var request     = require('request');
 var vm          = require('vm');
+var jsdom       = require("jsdom");
 var querystring = require('querystring');
 
 function extend() {
@@ -25,43 +26,60 @@ GooglePlusAPI = {
 		'User-Agent' : 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_3; en-us) AppleWebKit/534.1+ (KHTML, like Gecko) Version/5.0 Safari/533.16'
 	},
 
-	AUTH_HTTP_HEADERS : {},
-	OZ_DATA           : {},
+	IS_LOGIN     : false,
+	OZ_DATA      : {},
 
 	isLogin : function() {
-		return !!this.AUTH_HTTP_HEADERS['Authorization'];
+		return !!this.IS_LOGIN;
 	},
 
 	login : function(username, password, callback) {
 		var self = this;
+		var form = {};
 		request(
 			{
-				uri     : 'https://www.google.com/accounts/ClientLogin',
+				uri : 'https://accounts.google.com/Login',
+				headers : this.DEFAULT_HTTP_HEADERS
+			},
+			function (e, response, body) {
+				if (!e && response.statusCode == 200) {
+					jsdom.env({
+						html: body,
+						scripts: [
+							'http://code.jquery.com/jquery-1.5.min.js'
+						],
+						done: function(err, window) {
+							var $ = window.$;
+							$('#gaia_loginform input[type="hidden"]').each(function() {
+								var $this = $(this);
+								form[$this.attr('name')] = $this.val();
+							});
+							self.doLogin(form, username, password, callback);
+						}
+					});
+				}
+			}
+		);
+	},
+
+
+	doLogin : function(form, username, password, callback) {
+		var self = this;
+		form['Email']    = username;
+		form['Passwd']   = password;
+		form['continue'] = form['followup'] = 'https://plus.google.com/';
+		request(
+			{
+				uri     : 'https://accounts.google.com/ServiceLoginAuth',
 				method  : 'POST',
-				body    : querystring.stringify({
-					accountType : 'HOSTED_OR_GOOGLE',
-					service     : 'oz',
-					Email       : username,
-					Passwd      : password
-				}),
+				body    : querystring.stringify(form),
 				headers : extend(this.DEFAULT_HTTP_HEADERS, {
 					'Content-Type' : 'application/x-www-form-urlencoded',
 				})
 			},
 			function (e, response, body) {
-				if (!e && response.statusCode == 200) {
-					var auth_cookies = {};
-					var cookies = body.split("\n");
-					for (var i in cookies) {
-						if (cookies[i]) {
-							var cookie = cookies[i].split('=');
-							auth_cookies[cookie[0]] = cookie[1];
-						}
-					}
-					self.AUTH_HTTP_HEADERS = {
-						'Cookie'        : 'SID=' + auth_cookies['SID'],
-						'Authorization' : 'GoogleLogin auth=' + auth_cookies['Auth']
-					};
+				if (!e && response.statusCode == 302) {
+					self.IS_LOGIN = true;
 					self.getInitialData(1, function(data) {
 						if (data && !data.error) {
 							self.OZ_DATA[1] = data;
@@ -99,7 +117,7 @@ GooglePlusAPI = {
 			},
 			function (e, response, body) {
 				if (!e && response.statusCode == 200) {
-					self.AUTH_HTTP_HEADERS = {};
+					self.IS_LOGIN = false;
 					return callback({success : true});
 				}
 				else {
@@ -150,7 +168,7 @@ GooglePlusAPI = {
 						rt     : 'j'
 					}),
 				method  : 'GET',
-				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS)
+				headers : this.DEFAULT_HTTP_HEADERS
 			},
 			function (e, response, body) {
 				if (!e && response.statusCode == 200) {
@@ -324,7 +342,7 @@ GooglePlusAPI = {
 					}),
 				method  : 'POST',
 				body    : querystring.stringify(body),
-				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS, {
+				headers : extend(this.DEFAULT_HTTP_HEADERS, {
 					'Content-Type' : 'application/x-www-form-urlencoded',
 				})
 			},
@@ -393,7 +411,7 @@ GooglePlusAPI = {
 					}),
 				method  : 'POST',
 				body    : querystring.stringify(body),
-				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS, {
+				headers : extend(this.DEFAULT_HTTP_HEADERS, {
 					'Content-Type' : 'application/x-www-form-urlencoded',
 				})
 			},
@@ -461,7 +479,7 @@ GooglePlusAPI = {
 				}),
 				method  : 'POST',
 				body    : querystring.stringify(body),
-				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS, {
+				headers : extend(this.DEFAULT_HTTP_HEADERS, {
 					'Content-Type' : 'application/x-www-form-urlencoded',
 				})
 			},
@@ -518,7 +536,7 @@ GooglePlusAPI = {
 				uri     : this.BASE_URL + '/_/stream/getactivity/?'
 					+ querystring.stringify(qs),
 				method  : 'GET',
-				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS)
+				headers : this.DEFAULT_HTTP_HEADERS
 			},
 			function (e, response, body) {
 				if (!e && response.statusCode == 200) {
@@ -559,7 +577,7 @@ GooglePlusAPI = {
 					}),
 				method  : 'POST',
 				body    : querystring.stringify(body),
-				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS, {
+				headers : extend(this.DEFAULT_HTTP_HEADERS, {
 					'Content-Type' : 'application/x-www-form-urlencoded',
 				})
 			},
@@ -617,7 +635,7 @@ GooglePlusAPI = {
 						rt     : 'j'
 					}),
 				method  : 'GET',
-				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS)
+				headers : this.DEFAULT_HTTP_HEADERS
 			},
 			function (e, response, body) {
 				if (!e && response.statusCode == 200) {
@@ -681,7 +699,7 @@ GooglePlusAPI = {
 						rt     : 'j'
 					}),
 				method  : 'GET',
-				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS)
+				headers : this.DEFAULT_HTTP_HEADERS
 			},
 			function (e, response, body) {
 				if (!e && response.statusCode == 200) {
@@ -1219,7 +1237,7 @@ GooglePlusAPI = {
 					}),
 				method  : 'POST',
 				body    : querystring.stringify(body),
-				headers : extend(this.DEFAULT_HTTP_HEADERS, this.AUTH_HTTP_HEADERS, {
+				headers : extend(this.DEFAULT_HTTP_HEADERS, {
 					'Content-Type' : 'application/x-www-form-urlencoded',
 				})
 			},
