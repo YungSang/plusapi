@@ -79,17 +79,20 @@ It is an Unofficial Google+ API which aims for compatibility with [The Official 
 
 ## Dependencies
 
-* Node.js (tested with >= 0.4.11 < 0.5.0)  
+* Node.js (tested with 0.8.4)  
 	<http://nodejs.org/>
 
-* Express (tested with 2.4.6)  
+* Express (tested with 3.0.0rc3)  
 	<http://search.npmjs.org/#/express>
 
-* Request (tested with 2.1.1)  
+* Request (tested with 2.10.0)  
 	<http://search.npmjs.org/#/request>
 
-* Node-Markdown (tested with 0.1.0) for the static top page only  
+* Node-Markdown (tested with 0.1.1) for the static top page only  
 	<https://github.com/andris9/node-markdown>
+
+* Jsdom (tested with 0.2.15)  
+	<https://github.com/tmpvar/jsdom>
 
 ## Source
 

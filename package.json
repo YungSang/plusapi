@@ -11,9 +11,9 @@
 		"start"         : "node server.js"
 	},
 	"dependencies" : {
-		"express"       : "2.4.6",
-		"request"       : "2.1.1",
-		"node-markdown" : "0.1.0",
+		"express"       : "3.x",
+		"request"       : "2.10.0",
+		"node-markdown" : "0.1.1",
 		"jsdom"         : "0.2.15"
 	},
 	"engines": {
