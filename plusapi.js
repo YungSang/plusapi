@@ -43,21 +43,26 @@ GooglePlusAPI = {
 			},
 			function (e, response, body) {
 				if (!e && response.statusCode == 200) {
-					jsdom.env({
-						html    : body,
-						scripts : [
-							'http://code.jquery.com/jquery-1.5.min.js'
-						],
-						done    : function(err, window) {
-							var $ = window.$;
-							$('#gaia_loginform input[type="hidden"]').each(function() {
-								var $this = $(this);
-								form[$this.attr('name')] = $this.val();
-							});
-							self.doLogin(form, username, password, callback);
+					var doc = jsdom.jsdom(body);
+					var form = doc.getElementById('gaia_loginform');
+					if (form) {
+						var inputs = form.getElementsByTagName('input');
+						for (var i = 0, len = inputs.length ; i < len ; i++) {
+							var input = inputs[i];
+							var type = input.getAttribute('type');
+							if (type === 'hidden') {
+								var name = input.getAttribute('name');
+								var value = input.getAttribute('value');
+								form[name] = value;
+							}
 						}
-					});
+						return self.doLogin(form, username, password, callback);
+					}
 				}
+				return callback(self.makeErrorResponse(e, extend(response, {
+					name    : 'authError',
+					message : 'unable to login as username: ' + username
+				})));
 			}
 		);
 	},
