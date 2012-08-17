@@ -4,18 +4,21 @@ var plusapi = require('./plusapi');
 var fs = require('fs');
 var md = require("node-markdown").Markdown;
 
-var username = 'yourname';
+var username = 'username';
 var password = 'password';
 
-var app = express.createServer();
+var app = express();
 
 app.get('/', function(req, res) {
 	fs.readFile('./README.md', function (err, data) {
-		res.write('<!DOCTYPE html><html><head>');
-		res.write('<title>Unofficial Google+ API compatible with Google+ API</title>');
-		res.write('</head><body>');
-		res.write(md(data.toString()));
-		res.end('</body></html>');
+		var html = [
+			'<!DOCTYPE html><html><head>',
+			'<title>Unofficial Google+ API compatible with Google+ API</title>',
+			'</head><body>',
+			md(data.toString()),
+			'</body></html>'
+		].join("\n");
+		res.send(html);
 	});
 });
 
@@ -170,7 +173,7 @@ app.get('/v1/plusoners/:id', function(req, res) {
 function responseJSON(req, res, json) {
 	res.statusCode = (json.error ? json.error.code : 200);
 	res.charset = 'UTF-8';
-	res.header('cache-control',
+	res.set('cache-control',
 		'private, max-age=0, must-revalidate, no-transform');
 
 	var body = '';
@@ -188,13 +191,13 @@ function responseJSON(req, res, json) {
 	}
 
 	if (req.query.callback) {
-		res.header('Content-Type', 'text/javascript');
+		res.set('Content-Type', 'text/javascript');
 		res.send('// API callback\n'
 			+ 'if (typeof ' + req.query.callback + ' == "function") '
 			+ req.query.callback + '(' + body + ');');
 	}
 	else {
-		res.header('Content-Type', 'application/json');
+		res.set('Content-Type', 'application/json');
 		res.send(body);
 	}
 }
